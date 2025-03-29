@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#SBATCH --job-name=ext_match  
+#SBATCH --job-name=match_ext  
 #SBATCH --time=0-01:00:00    
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1

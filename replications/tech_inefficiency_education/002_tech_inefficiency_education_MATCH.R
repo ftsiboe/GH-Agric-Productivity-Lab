@@ -25,7 +25,7 @@ for(var in c(Fixd)){ Match.formula<-paste0(Match.formula,"+factor(",var,")")}
 DATA <- DATA[complete.cases(DATA[c("Surveyx","EaId","HhId","Mid","UID","Weight","Treat",Emch,Scle,Fixd)]),]
 summary(DATA[c(Emch,Scle,Fixd)])
 
-function(){
+if(Sys.getenv("SLURM_JOB_NAME") %in% "drawlist"){
   m.specs <- Fxn_draw_spec(drawN=100,DATA=DATA,myseed=myseed)
   saveRDS(m.specs$m.specs,file="results/mspecs.rds")
   saveRDS(m.specs$drawlist,file="results/drawlist.rds")
@@ -33,28 +33,28 @@ function(){
 
 m.specs <- readRDS("results/mspecs.rds")
 
-# m.specs <- m.specs[! paste0("results/matching/Match",stringr::str_pad(m.specs$ARRAY,4,pad="0"),".rds") %in% 
-#                      list.files(paste0("results/matching"),full.names = T),]
+# m.specs <- m.specs[! paste0(REPO,"Results/matching/Match",stringr::str_pad(m.specs$ARRAY,4,pad="0"),".rds") %in%
+#                      list.files(paste0(REPO,"Results/matching"),full.names = T),]
 
 if(!is.na(as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID")))){
   m.specs <- m.specs[as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID")),]
 }
 
-lapply(
-  1:nrow(m.specs), #
-  function(i,DATA){
-    tryCatch({
-      # i <- 1;m.data <- DATA
-      Sampels <- Fxn_Sampels(DATA=DATA,Emch=Emch,Scle=Scle,Fixd=Fixd,m.specs=m.specs,i=i,drawlist=readRDS("results/drawlist.rds"))
-      if(! m.specs$boot[i] %in% 0){Sampels[["m.out"]] <- NULL}
-      saveRDS(Sampels,file=paste0("results/matching/Match",stringr::str_pad(m.specs$ARRAY[i],4,pad="0"),".rds"))
-    }, error=function(e){})
-    return(i)
-  },DATA=DATA)
+if(Sys.getenv("SLURM_JOB_NAME") %in% c("match_all","match_edu")){
+  lapply(
+    1:nrow(m.specs), #
+    function(i,DATA){
+      tryCatch({
+        # i <- 1;m.data <- DATA
+        Sampels <- Fxn_Sampels(DATA=DATA,Emch=Emch,Scle=Scle,Fixd=Fixd,m.specs=m.specs,i=i,drawlist=readRDS("results/drawlist.rds"))
+        if(! m.specs$boot[i] %in% 0){Sampels[["m.out"]] <- NULL}
+        saveRDS(Sampels,file=paste0("results/matching/Match",stringr::str_pad(m.specs$ARRAY[i],4,pad="0"),".rds"))
+      }, error=function(e){})
+      return(i)
+    },DATA=DATA)
+}
 
-# 
-
-function(){
+if(Sys.getenv("SLURM_JOB_NAME") %in% c("cov_bal")){
   Fxn_Covariate_balance()
 }
 
