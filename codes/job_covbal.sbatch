@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#SBATCH --job-name=drawlist 
+#SBATCH --job-name=cov_bal 
 #SBATCH --time=0-01:00:00    
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -12,10 +12,6 @@
 
 module purge
 module load GDAL/3.5.0-foss-2022a PROJ/9.0.0-GCCcore-11.3.0
-
-cd "/homes/ftsiboe/Articles/GH/GH_AgricProductivityLab/replications/tech_inefficiency_conflict"
-module load R/4.2.1-foss-2022a
-R --no-save -q < 002_tech_inefficiency_conflict_MATCH.R
 
 cd "/homes/ftsiboe/Articles/GH/GH_AgricProductivityLab/replications/tech_inefficiency_disability"
 module load R/4.2.1-foss-2022a
