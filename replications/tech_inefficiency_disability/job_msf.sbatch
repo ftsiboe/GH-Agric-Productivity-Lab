@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#SBATCH --job-name=disa_msf
+#SBATCH --job-name=msf_disa
 #SBATCH --time=0-15:00:00    
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=3
