@@ -28,8 +28,7 @@ summary(DATA[c(Emch,Scle,Fixd)])
 
 m.specs <- readRDS("results/mspecs.rds")
 
-plan(multisession)
-future_lapply(1:nrow(m.specs),Fxn_te_cals)
+lapply(1:nrow(m.specs),Fxn_te_cals)
 
 function(){Fxn_te_summary()}
 

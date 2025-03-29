@@ -1799,7 +1799,7 @@ Fxn_te_cals <- function(i){
           }), fill = TRUE)) 
     
     atet_scalar <- data.frame(m.specs[i,],atet_scalar)
-    
+
     saveRDS(atet_scalar,file=paste0("results/te/te",stringr::str_pad(m.specs$ARRAY[i],4,pad="0"),".rds"))
     return(i)
   }, error = function(e){return(NULL)})
