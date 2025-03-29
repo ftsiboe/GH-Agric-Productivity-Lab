@@ -1,11 +1,11 @@
 #!/bin/bash -l
 
-#SBATCH --job-name=te_all
+#SBATCH --job-name=te_sum
 #SBATCH --time=0-01:00:00    
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --mem=5G
-#SBATCH --array=1-808
+#SBATCH --array=1-1
 #SBATCH --mail-user=ftsiboe@ksu.edu
 #SBATCH --mail-type=ALL
 #SBATCH --output=/dev/null

@@ -20,7 +20,14 @@ Fixd <- c("Credit","OwnLnd","Ethnic","Marital","Religion","Head")
 
 m.specs <- readRDS("results/mspecs.rds")
 
-lapply(1:nrow(m.specs),Fxn_te_cals)
+if(Sys.getenv("SLURM_JOB_NAME") %in% c("te_all","te_res")){
+  if(!is.na(as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID")))){
+    m.specs <- m.specs[as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID")),]
+  }
+  lapply(1:nrow(m.specs),Fxn_te_cals)
+}
 
-function(){Fxn_te_summary()}
+if(Sys.getenv("SLURM_JOB_NAME") %in% c("te_sum")){
+  Fxn_te_summary()
+}
 
