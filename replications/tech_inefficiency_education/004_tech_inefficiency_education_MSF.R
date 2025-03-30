@@ -51,7 +51,7 @@ if(!is.na(as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID")))){
 lapply(
   c(1:nrow(SPECS)),
   function(fit){
-    # fit <- 2
+    # fit <- 1
     f <- SPECS$f[fit]
     d <- SPECS$d[fit]
     disasg <- SPECS$disasg[fit]
@@ -98,7 +98,7 @@ lapply(
       }
       
       res <- lapply(
-        unique(drawlist$ID),Fxn_draw_estimations,
+        unique(drawlist$ID)[1:3],Fxn_draw_estimations,
         data = data,
         surveyy  = F,
         intercept_shifters  = list(Svarlist=ArealistX,Fvarlist=c("Survey","Ecozon")),

@@ -9,13 +9,29 @@ library(optmatch);library(Matching);library(rgenoud);library(quadprog);library(c
 
 #---------------------------------------------
 # Minor                                    ####
+# This section includes minor configurations and utility functions.
+
+# Set a random seed for reproducibility.
 myseed <- 03242025
-mode <- function(x,na.rm = T) {ux <- unique(x); ux[which.max(tabulate(match(x, ux)))]}
+
+# Define a function to calculate the mode of a vector.
+# Parameters:
+# - x: The input vector.
+# - na.rm: A logical value indicating whether NA values should be removed.
+# Returns the mode of the input vector.
+mode <- function(x, na.rm = T) {
+  ux <- unique(x)  # Get unique values in the vector.
+  ux[which.max(tabulate(match(x, ux)))]  # Identify the value that appears most frequently.
+}
 #---------------------------------------------
 # DATA Prep                                ####
+# This function prepares the data for analysis by transforming and cleaning various columns.
 Fxn_DATA_Prep <- function(DATA){
+  
+  # Copy the WeightHH column to Weight
   DATA$Weight <- DATA$WeightHH
   
+  # Uncommented lines below can be used to transform the data by scaling certain columns
   # DATA$Y  <- DATA$HrvstKg #/1000
   # DATA$I1 <- DATA$Area #/1000
   # DATA$I2 <- DATA$SeedKg #/1000
@@ -24,19 +40,24 @@ Fxn_DATA_Prep <- function(DATA){
   # DATA$I5 <- DATA$PestLt #/1000
   # DATA$I6 <- DATA$FertKg #/1000
   
-  for(vv in c("AgeYr")){ # "Y", "I1", 
+  # Log-transform the AgeYr column and store this transformation in a new column called lnAgeYr
+  for(vv in c("AgeYr")) {
     DATA[,paste0("ln",vv)] <- log(DATA[,vv])
   }
   
-  for(vv in c("YerEdu")){ # "I2", "I3", "I4", "I5", "I6", 
+  # Log-transform the YerEdu column with a small constant added to avoid log(0) issues, and store in a new column called lnYerEdu
+  for(vv in c("YerEdu")) {
     DATA[,paste0("ln",vv)] <- log(DATA[,vv] + 0.00001)
   }
   
-  for( vv in c("EduLevel", "Survey", "Region", "Ecozon", "Locality", "Ethnic", 
-               "Season", "EduCat", "Head", "Religion", "Marital", "CropID")){
-    tryCatch({ DATA[,vv] <- haven::as_factor(DATA[,vv]) }, error=function(e){})
+  # Convert specified columns to factors using the haven::as_factor function
+  for( vv in c("EduLevel", "Survey", "Region", "Ecozon", "Locality", "Ethnic", "Season", "EduCat", "Head", "Religion", "Marital", "CropID")) {
+    tryCatch({
+      DATA[,vv] <- haven::as_factor(DATA[,vv])
+    }, error=function(e){})
   }
   
+  # Convert EduLevel to numeric levels for analysis
   tryCatch({
     DATA$EduLevel <- ifelse(as.character((DATA$EduLevel)) %in% "None","0",as.character((DATA$EduLevel)))
     DATA$EduLevel <- ifelse(DATA$EduLevel %in% "Primary","1",DATA$EduLevel)
@@ -46,131 +67,192 @@ Fxn_DATA_Prep <- function(DATA){
     DATA$EduLevel <- as.numeric(DATA$EduLevel)
   }, error=function(e){})
   
+  # Convert specified columns to character type
   DATA$CropID <- as.character(DATA$CropID)
   DATA$Ecozon <- as.character(DATA$Ecozon)
   DATA$Survey <- as.character(DATA$Survey)
   DATA$Region <- as.character(DATA$Region)
   
+  # Return the cleaned and transformed data
   return(DATA)
 }
-
 #---------------------------------------------
 # MSF specs                                ####
+# This function generates specifications (SPECS) for multi-stage frontier (MSF) analysis.
+# It creates a dataframe that includes combinations of technical variables, distribution forms, and various levels of disaggregation.
 
-Fxn_SPECS <- function(TechVarlist,mainF=2,mainD=1){
+Fxn_SPECS <- function(TechVarlist, mainF=2, mainD=1) {
+  
+  # Create a dataframe with all combinations of FXNFORMS and DISTFORMS, labeled as "Pooled".
   SPECS <- as.data.frame(
     data.table::rbindlist(
-      future_lapply(1:length(FXNFORMS),function(f){data.frame(level="Pooled",f=f, d=1:length(DISTFORMS))}), fill = TRUE))
-  SPECS <- rbind(SPECS[SPECS$f %in% mainF,],SPECS[SPECS$d %in% mainD,])
+      future_lapply(1:length(FXNFORMS), function(f) {
+        data.frame(level="Pooled", f=f, d=1:length(DISTFORMS))
+      }), fill = TRUE
+    )
+  )
+  
+  # Filter the dataframe to only include rows where f and d match mainF and mainD, respectively.
+  SPECS <- rbind(SPECS[SPECS$f %in% mainF,], SPECS[SPECS$d %in% mainD,])
+  
+  # Add a column for disaggregation variable, initially set to "CropID".
   SPECS$disasg <- "CropID"
+  
+  # Remove duplicate rows in the dataframe.
   SPECS <- unique(SPECS)
+  
+  # Add additional rows for different levels of disaggregation based on crop types and demographic variables.
   SPECS <- unique(
     rbind(SPECS,
-          data.frame(disasg="CropID"   ,level=c("Beans","Cassava","Cocoa","Cocoyam","Maize","Millet","Okra","Palm","Peanut",
-                                                "Pepper","Plantain","Rice","Sorghum","Tomatoe","Yam"),SPECS[(SPECS$f %in% mainF & SPECS$d %in% mainD),c("f","d")]),
+          data.frame(disasg="CropID", level=c("Beans","Cassava","Cocoa","Cocoyam","Maize","Millet","Okra","Palm","Peanut",
+                                              "Pepper","Plantain","Rice","Sorghum","Tomatoe","Yam"), 
+                     SPECS[(SPECS$f %in% mainF & SPECS$d %in% mainD), c("f","d")]),
           as.data.frame(
             data.table::rbindlist(
               lapply(
-                c("Female","Region" ,"Ecozon" ,"EduCat" ,"EduLevel" ,"AgeCat"),
-                function(w){
+                c("Female", "Region", "Ecozon", "EduCat", "EduLevel", "AgeCat"),
+                function(w) {
                   tryCatch({
-                    DONE <- data.frame(disasg=w   ,level=unique(DATA[,w])   ,SPECS[(SPECS$f %in% mainF & SPECS$d %in% mainD),c("f","d")])
+                    DONE <- data.frame(disasg=w, level=unique(DATA[,w]), 
+                                       SPECS[(SPECS$f %in% mainF & SPECS$d %in% mainD), c("f","d")])
                     return(DONE)
-                  }, error = function(e){return(NULL)})
-                }), fill = TRUE))))
+                  }, error = function(e) { return(NULL) })
+                }), fill = TRUE)
+          )
+    )
+  )
   
+  # Set the first technical variable from TechVarlist as the TechVar column.
   SPECS$TechVar <- TechVarlist[1]
   
-  if(length(TechVarlist)>1){
+  # If there are more technical variables, add them to the dataframe for rows where disasg is "CropID" and level is "Pooled".
+  if (length(TechVarlist) > 1) {
     SPECS <- unique(
       rbind(SPECS,
-            data.frame(TechVar=TechVarlist[2:length(TechVarlist)],
-                       SPECS[(SPECS$disasg %in% "CropID" & SPECS$level %in% "Pooled" & SPECS$f %in% mainF & SPECS$d %in% mainD),c("disasg","level","f","d")])))
+            data.frame(TechVar=TechVarlist[2:length(TechVarlist)], 
+                       SPECS[(SPECS$disasg %in% "CropID" & SPECS$level %in% "Pooled" & SPECS$f %in% mainF & SPECS$d %in% mainD), c("disasg","level","f","d")])
+      )
+    )
   }
   
-  SPECS <- rbind(SPECS[SPECS$d %in% mainD,],SPECS[!SPECS$d %in% mainD,])
+  # Reorder the dataframe to prioritize rows where d matches mainD.
+  SPECS <- rbind(SPECS[SPECS$d %in% mainD,], SPECS[!SPECS$d %in% mainD,])
   
   return(SPECS)
 }
-
 #---------------------------------------------
 # Draw/match specs                         ####
-Fxn_draw_spec <- function(drawN,DATA,myseed=1113023){
-  # drawN <- 100
+# This function generates a draw list and matching specifications.
+# Parameters:
+# - drawN: The number of draws to perform.
+# - DATA: The dataset to be used.
+# - myseed: The seed for random number generation (default is 03242025).
+
+Fxn_draw_spec <- function(drawN, DATA, myseed=03242025) {
+  
+  # Generate a draw list by sampling EaId values within each unique Survey group.
   drawlist <- as.data.frame(
     data.table::rbindlist(
       lapply(
         unique(DATA$Survey),
-        function(glss,myseed){
+        function(glss, myseed) {
           set.seed(myseed)
-          return(data.frame(glss=glss,ID = 0:drawN,EaId = c(0,sample(DATA[DATA$Survey %in% glss,"EaId"],size=drawN, replace=TRUE))))
-        },myseed=myseed), fill = TRUE))
-  drawlist <- drawlist %>%  tidyr::spread(glss, EaId)
+          return(data.frame(glss=glss, ID = 0:drawN, EaId = c(0, sample(DATA[DATA$Survey %in% glss, "EaId"], size=drawN, replace=TRUE))))
+        }, myseed=myseed), fill = TRUE
+    )
+  )
   
+  # Spread the draw list to create a wide format with each Survey as a column.
+  drawlist <- drawlist %>% tidyr::spread(glss, EaId)
+  
+  # Generate matching specifications for each unique draw ID.
   m.specs <- as.data.frame(
     data.table::rbindlist(
       lapply(
         unique(drawlist$ID),
-        function(w){
+        function(w) {
           DONE <- NULL
           tryCatch({
-            DONE <- data.frame(boot=w,rbind(
+            DONE <- data.frame(boot=w, rbind(
               # Nearest Neighbor Matching
-              data.frame(method = "nearest", distance = c("euclidean","scaled_euclidean","mahalanobis","robust_mahalanobis") , link = NA),
+              data.frame(method = "nearest", distance = c("euclidean", "scaled_euclidean", "mahalanobis", "robust_mahalanobis"), link = NA),
               data.frame(
                 method = "nearest",
-                distance = "glm" ,
-                link = c("logit","probit","cloglog","cauchit")) #
+                distance = "glm",
+                link = c("logit", "probit", "cloglog", "cauchit"))
             ))
           }, error=function(e){})
           return(DONE)
-        }), fill = TRUE))
+        }), fill = TRUE
+    )
+  )
   
+  # Add an ARRAY column to the matching specifications dataframe.
   m.specs$ARRAY <- 1:nrow(m.specs)
+  
+  # Print the first few rows of the matching specifications for verification.
   print(head(m.specs))
   
-  return(list(m.specs=m.specs,drawlist=drawlist))
+  # Return a list containing the matching specifications and the draw list.
+  return(list(m.specs=m.specs, drawlist=drawlist))
 }
 #---------------------------------------------
 # Sampels                                  ####
+# This function performs stratified bootstrap sampling and matching.
+# Parameters:
+# - DATA: The dataset to be used.
+# - Emch: A vector of covariates for exact matching.
+# - Scle: A vector of covariates for scaling.
+# - Fixd: A vector of fixed covariates.
+# - m.specs: A dataframe containing matching specifications.
+# - i: The index of the current specification in m.specs.
+# - drawlist: A dataframe containing the draw list.
 
-Fxn_Sampels <- function(DATA,Emch,Scle,Fixd,m.specs,i,drawlist){
-  m.data <- DATA[c("Surveyx","EaId","HhId","Mid","UID","Weight","Treat",Emch,Scle,Fixd)] 
+Fxn_Sampels <- function(DATA, Emch, Scle, Fixd, m.specs, i, drawlist) {
   
-  m.data <- m.data[complete.cases(m.data[c("Surveyx","EaId","HhId","Mid","UID","Weight","Treat",Emch,Scle,Fixd)]),]
+  # Select relevant columns from the dataset.
+  m.data <- DATA[c("Surveyx", "EaId", "HhId", "Mid", "UID", "Weight", "Treat", Emch, Scle, Fixd)] 
   
-  m.data <- dplyr::inner_join(doBy::summaryBy(list("Weight",c("Surveyx", "EaId")),data=m.data,FUN=sum,na.rm=T),m.data,by=c("Surveyx", "EaId"))
+  # Remove rows with missing values in the specified columns.
+  m.data <- m.data[complete.cases(m.data[c("Surveyx", "EaId", "HhId", "Mid", "UID", "Weight", "Treat", Emch, Scle, Fixd)]),]
+  
+  # Summarize the weight by Surveyx and EaId and merge with the original data.
+  m.data <- dplyr::inner_join(doBy::summaryBy(list("Weight", c("Surveyx", "EaId")), data=m.data, FUN=sum, na.rm=T), m.data, by=c("Surveyx", "EaId"))
   names(m.data)[names(m.data) %in% "Weight.sum"] <- "alloc"
- 
-  # Drawing a stratified bootstrap sample
-  m.data <- m.data[!m.data$EaId %in% c(t(drawlist[drawlist$ID %in% m.specs$boot[i],2:ncol(drawlist)])),]
   
-  m.data <- dplyr::inner_join(doBy::summaryBy(list("Weight",c("Surveyx", "EaId")),data=m.data,FUN=sum,na.rm=T),m.data,by=c("Surveyx", "EaId"))
+  # Drawing a stratified bootstrap sample by excluding certain EaId values.
+  m.data <- m.data[!m.data$EaId %in% c(t(drawlist[drawlist$ID %in% m.specs$boot[i], 2:ncol(drawlist)])),]
+  
+  # Summarize the weight by Surveyx and EaId again and merge with the sampled data.
+  m.data <- dplyr::inner_join(doBy::summaryBy(list("Weight", c("Surveyx", "EaId")), data=m.data, FUN=sum, na.rm=T), m.data, by=c("Surveyx", "EaId"))
   names(m.data)[names(m.data) %in% "Weight.sum"] <- "allocj"
   
-  m.data$pWeight <- m.data$Weight*(m.data$alloc/m.data$allocj)
+  # Calculate the adjusted weights for matching.
+  m.data$pWeight <- m.data$Weight * (m.data$alloc / m.data$allocj)
   
-  row.names(m.data)<-1:nrow(m.data)
-  m.data$MtchId<-1:nrow(m.data)
+  # Assign row names and matching IDs.
+  row.names(m.data) <- 1:nrow(m.data)
+  m.data$MtchId <- 1:nrow(m.data)
   
-  if(m.specs$link[i] %in% NA){
-    cat(crayon::green("method =",m.specs$method[i],",distance =",m.specs$distance[i],Sys.time()),fill=T)
+  # Perform matching using the specified method and distance.
+  if (m.specs$link[i] %in% NA) {
+    cat(crayon::green("method =", m.specs$method[i], ",distance =", m.specs$distance[i], Sys.time()), fill=T)
     m.out <- matchit(as.formula(Match.formula),
-                     exact    = as.formula(paste0("~",Emch.formula)),
+                     exact    = as.formula(paste0("~", Emch.formula)),
                      data     = m.data,
                      method   = paste0(m.specs$method[i]),
                      distance = paste0(m.specs$distance[i]),
                      estimand = "ATT",
                      s.weights = "pWeight",
                      ratio    = 1,
-                     m.order  = ifelse(paste0(m.specs$distance[i]) %in% "glm","largest","closest"),
+                     m.order  = ifelse(paste0(m.specs$distance[i]) %in% "glm", "largest", "closest"),
                      replace  = T,
                      reuse.max = 1,
                      tol = 1e-7)
-  }else{
-    cat(crayon::green("method =",m.specs$method[i],",distance =",m.specs$distance[i],"link=",m.specs$link[i],Sys.time()),fill=T)
+  } else {
+    cat(crayon::green("method =", m.specs$method[i], ",distance =", m.specs$distance[i], "link=", m.specs$link[i], Sys.time()), fill=T)
     m.out <- matchit(as.formula(Match.formula),
-                     exact    = as.formula(paste0("~",Emch.formula)),
+                     exact    = as.formula(paste0("~", Emch.formula)),
                      data     = m.data,
                      method   = paste0(m.specs$method[i]),
                      distance = paste0(m.specs$distance[i]),
@@ -180,114 +262,164 @@ Fxn_Sampels <- function(DATA,Emch,Scle,Fixd,m.specs,i,drawlist){
                      ratio    = 1,
                      #caliper  = 0.10,
                      #discard  = "both",
-                     m.order  = ifelse(paste0(m.specs$distance[i]) %in% "glm","largest","closest"),
+                     m.order  = ifelse(paste0(m.specs$distance[i]) %in% "glm", "largest", "closest"),
                      replace  = T,
                      reuse.max = 1,
                      tol = 1e-7)
   }
   
-  md <- match.data(m.out)[c("Surveyx","EaId","HhId","Mid","UID","weights","pWeight")]
-  DONE <- list(m.specs=m.specs[i,],m.out=m.out,md=md,df=m.data[c("Surveyx","EaId","HhId","Mid","UID","pWeight")])
+  # Extract matched data and return the results.
+  md <- match.data(m.out)[c("Surveyx", "EaId", "HhId", "Mid", "UID", "weights", "pWeight")]
+  DONE <- list(m.specs=m.specs[i,], m.out=m.out, md=md, df=m.data[c("Surveyx", "EaId", "HhId", "Mid", "UID", "pWeight")])
   return(DONE)
 }
 #---------------------------------------------
 # Covariate balance                        ####
-Fxn_Covariate_balance <- function(){
+# This function assesses the covariate balance for matched data and calculates balance statistics.
+# It saves the balance statistics and optimal matching specifications to files.
+
+Fxn_Covariate_balance <- function() {
+  # Read in the matching specifications.
   m.specs <- readRDS("results/mspecs.rds")
+  
+  # Filter the specifications to only include those with boot equal to 0.
   m.specs <- m.specs[m.specs$boot %in% 0,]
   
+  # Initialize the balance table by applying balance checks for each matching specification.
   bal_tab <- as.data.frame(
     data.table::rbindlist(
       lapply(
         m.specs$ARRAY,
-        function(i){
-          # i <- 1
+        function(i) {
           DONE <- NULL
           tryCatch({ 
-            m.out <-  readRDS(paste0("results/matching/Match",stringr::str_pad(m.specs$ARRAY[i],4,pad="0"),".rds"))
-            bal_tab <- cobalt::bal.tab(m.out$m.out, un = TRUE,abs=TRUE, stats = c("m", "v", "ks"))$Balance
-            bal_tab$Coef <- rownames(bal_tab)
-            bal_tab <- bal_tab %>%  tidyr::gather(stat, value, c("Diff.Un","V.Ratio.Un","KS.Un","Diff.Adj","V.Ratio.Adj","KS.Adj"))
-            bal_tab$stat <- gsub("V.Ratio","V_Ratio",bal_tab$stat)
-            bal_tab <- tidyr::separate(bal_tab,"stat",into = c("stat","sample"),sep="[.]")
+            # Read in the matching results.
+            m.out <- readRDS(paste0("results/matching/Match", stringr::str_pad(m.specs$ARRAY[i], 4, pad="0"), ".rds"))
             
-            DONE <- data.frame(m.out$m.specs,bal_tab)
-          }, error=function(e){})
+            # Calculate the balance statistics using the cobalt package.
+            bal_tab <- cobalt::bal.tab(m.out$m.out, un = TRUE, abs = TRUE, stats = c("m", "v", "ks"))$Balance
+            bal_tab$Coef <- rownames(bal_tab)
+            
+            # Reshape the balance table for easier analysis.
+            bal_tab <- bal_tab %>% tidyr::gather(stat, value, c("Diff.Un", "V.Ratio.Un", "KS.Un", "Diff.Adj", "V.Ratio.Adj", "KS.Adj"))
+            bal_tab$stat <- gsub("V.Ratio", "V_Ratio", bal_tab$stat)
+            bal_tab <- tidyr::separate(bal_tab, "stat", into = c("stat", "sample"), sep = "[.]")
+            
+            DONE <- data.frame(m.out$m.specs, bal_tab)
+          }, error = function(e) {})
           return(DONE)
-        }), fill = TRUE))
+        }), fill = TRUE)
+  )
   
-  rate <- bal_tab %>%  tidyr::spread(stat, value)
-  rate$rate <- ((rate$Diff-0)^2 + (rate$KS-0)^2 + (rate$V_Ratio-1)^2)/3
-  rate <- doBy::summaryBy(rate+Diff+V_Ratio+KS~ARRAY+method+distance+link+sample,data=rate,FUN=mean,na.rm=T)
-  rate <- rate[order(-rate$rate,rate$ARRAY),]
+  # Reshape the balance table to spread the statistics into separate columns.
+  rate <- bal_tab %>% tidyr::spread(stat, value)
+  
+  # Calculate a composite balance rate.
+  rate$rate <- ((rate$Diff - 0)^2 + (rate$KS - 0)^2 + (rate$V_Ratio - 1)^2) / 3
+  
+  # Summarize the balance statistics by method, distance, link, and sample.
+  rate <- doBy::summaryBy(rate + Diff + V_Ratio + KS ~ ARRAY + method + distance + link + sample, data = rate, FUN = mean, na.rm = T)
+  
+  # Order the rate table by the composite balance rate.
+  rate <- rate[order(-rate$rate, rate$ARRAY),]
+  
+  # Filter the rate table to only include adjusted samples.
   rate <- rate[rate$sample %in% "Adj",]
-  rate$name <- ifelse(rate$link %in% "logit","Logit [PS]",NA)
-  rate$name <- ifelse(rate$link %in% "cauchit","Cauchit [PS]",rate$name)
-  rate$name <- ifelse(rate$link %in% "probit","Probit [PS]",rate$name)
-  rate$name <- ifelse(rate$link %in% "cloglog","Complementary Log-Log [PS]",rate$name)
   
-  rate$name <- ifelse(rate$distance %in% "euclidean","Euclidean",rate$name)
-  rate$name <- ifelse(rate$distance %in% "robust_mahalanobis","Robust Mahalanobis",rate$name)
-  rate$name <- ifelse(rate$distance %in% "scaled_euclidean","Scaled Euclidean",rate$name)
-  rate$name <- ifelse(rate$distance %in% "mahalanobis","Mahalanobis",rate$name)
+  # Add a descriptive name for each combination of method, distance, and link.
+  rate$name <- ifelse(rate$link %in% "logit", "Logit [PS]", NA)
+  rate$name <- ifelse(rate$link %in% "cauchit", "Cauchit [PS]", rate$name)
+  rate$name <- ifelse(rate$link %in% "probit", "Probit [PS]", rate$name)
+  rate$name <- ifelse(rate$link %in% "cloglog", "Complementary Log-Log [PS]", rate$name)
+  rate$name <- ifelse(rate$distance %in% "euclidean", "Euclidean", rate$name)
+  rate$name <- ifelse(rate$distance %in% "robust_mahalanobis", "Robust Mahalanobis", rate$name)
+  rate$name <- ifelse(rate$distance %in% "scaled_euclidean", "Scaled Euclidean", rate$name)
+  rate$name <- ifelse(rate$distance %in% "mahalanobis", "Mahalanobis", rate$name)
+  
+  # Add an ID column to the rate table.
   rate$ID <- 1:nrow(rate)
-  saveRDS(rate,file="results/mspecs_ranking.rds")
-  saveRDS(rate[nrow(rate),],file="results/mspecs_optimal.rds")
-  saveRDS(bal_tab,file="results/balance_table.rds")
+  
+  # Save the rate table, the optimal matching specification, and the balance table to files.
+  saveRDS(rate, file = "results/mspecs_ranking.rds")
+  saveRDS(rate[nrow(rate),], file = "results/mspecs_optimal.rds")
+  saveRDS(bal_tab, file = "results/balance_table.rds")
+  
   return("done")
 }
 #---------------------------------------------
 # Functional forms                         ####
-Fxn_SF_forms <- function(nX=5,TREND=FALSE){
+# This function generates different functional forms for stochastic frontier analysis.
+# Parameters:
+# - nX: The number of input variables (default is 5).
+# - TREND: A logical value indicating whether to include a trend component (default is FALSE).
+
+Fxn_SF_forms <- function(nX=5, TREND=FALSE) {
   
+  # Initialize strings for different functional forms.
   lnInputs  <- 0
   Inputs    <- 0
   Quadratic <- 0
   Translog  <- 0
-  for(i in 1:nX){
-    Inputs    <- paste0(Inputs,"+I",i)
-    lnInputs  <- paste0(lnInputs,"+lnI",i)
-    Quadratic <- paste0(Quadratic,"+I(1/2*I",i,"*I",i,")")
-    Translog  <- paste0(Translog,"+I(1/2*lnI",i,"*lnI",i,")")
-    for(j in 1:nX){
-      if(i<j) Translog <- paste0(Translog,"+lnI",i,"*lnI",j)
-      if(i<j) Quadratic <- paste0(Quadratic,"+I",i,"*I",j)
+  
+  # Construct the functional forms by iterating over the number of input variables.
+  for(i in 1:nX) {
+    Inputs    <- paste0(Inputs, "+I", i)
+    lnInputs  <- paste0(lnInputs, "+lnI", i)
+    Quadratic <- paste0(Quadratic, "+I(1/2*I", i, "*I", i, ")")
+    Translog  <- paste0(Translog, "+I(1/2*lnI", i, "*lnI", i, ")")
+    for(j in 1:nX) {
+      if(i < j) Translog <- paste0(Translog, "+lnI", i, "*lnI", j)
+      if(i < j) Quadratic <- paste0(Quadratic, "+I", i, "*I", j)
     }
   }
   
+  # Create a list of functional forms.
   FXNFORMS <- list(
-    CD=gsub("0[+]","",lnInputs),                                        # Cobb-Douglas Production Function
-    TL=paste0(gsub("0[+]","",lnInputs),"+",gsub("0[+]","",Translog)),   # Translog Production Function
-    # LN=gsub("0[+]","",Inputs),                                          # Linear Production Function
-    # QD=paste0(gsub("0[+]","",Inputs),"+",gsub("0[+]","",Quadratic)),    # Quadratic Production Function
-    # GP=paste0(gsub("0[+]","",lnInputs),"+Y"),                           # Generalized Production Function
-    # TP=paste0(gsub("0[+]","",lnInputs),"+",gsub("0[+]","",Inputs)),      # Transcendental Production Function
+    CD = gsub("0[+]", "", lnInputs),                                            # Cobb-Douglas Production Function
+    TL = paste0(gsub("0[+]", "", lnInputs), "+", gsub("0[+]", "", Translog)),   # Translog Production Function
+    # LN = gsub("0[+]", "", Inputs),                                            # Linear Production Function
+    # QD = paste0(gsub("0[+]", "", Inputs), "+", gsub("0[+]", "", Quadratic)),  # Quadratic Production Function
+    # GP = paste0(gsub("0[+]", "", lnInputs), "+Y"),                            # Generalized Production Function
+    # TP = paste0(gsub("0[+]", "", lnInputs), "+", gsub("0[+]", "", Inputs)),   # Transcendental Production Function
     NULL
   )
   
+  # Remove any NULL entries in the list.
   FXNFORMS <- FXNFORMS[lengths(FXNFORMS) != 0]
   
-  if(TREND) FXNFORMS$TP <- gsub(paste0("[+]I",nX),"",FXNFORMS$TP)
+  # Modify the Transcendental Production Function if TREND is TRUE.
+  if(TREND) FXNFORMS$TP <- gsub(paste0("[+]I", nX), "", FXNFORMS$TP)
   
+  # Create a list of distribution forms.
   DISTFORMS <- list(
-    hnormal        = list("hnormal",scaling=FALSE),        # the half normal distribution (Aigner et al. 1977, Meeusen and Vandenbroeck 1977)
-    tnormal        = list("tnormal",scaling=FALSE),        # the truncated normal distribution (Stevenson 1980)
-    exponential    = list("exponential",scaling=FALSE),    # the exponential distribution
-    tslaplace      = list("tslaplace",scaling=FALSE),      # the truncated skewed Laplace distribution (Wang 2012).
-    genexponential = list("genexponential",scaling=FALSE), # the generalized exponential distribution (Papadopoulos 2020)
-    tnormal_scaled = list("tnormal",scaling=TRUE),         # the truncated normal distribution (Stevenson 1980) with the scaling property model (Wang and Schmidt 2002)  !!!
-    rayleigh       = list("rayleigh",scaling=FALSE),        # the Rayleigh distribution (Hajargasht 2015)
- 
-    uniform        = list("uniform",scaling=FALSE),        # the uniform distribution (Li 1996, Nguyen 2010)
-    gamma          = list("gamma",scaling=FALSE),          # the Gamma distribution (Greene 2003)  !!!
-    lognormal      = list("lognormal",scaling=FALSE),      # the log normal distribution (Migon and Medici 2001,Wang and Ye 2020)  !!!
-    weibull        = list("weibull",scaling=FALSE)         # the Weibull distribution (Tsionas 2007)  !!!
+    hnormal        = list("hnormal", scaling=FALSE),        # the half normal distribution (Aigner et al. 1977, Meeusen and Vandenbroeck 1977)
+    tnormal        = list("tnormal", scaling=FALSE),        # the truncated normal distribution (Stevenson 1980)
+    exponential    = list("exponential", scaling=FALSE),    # the exponential distribution
+    tslaplace      = list("tslaplace", scaling=FALSE),      # the truncated skewed Laplace distribution (Wang 2012)
+    genexponential = list("genexponential", scaling=FALSE), # the generalized exponential distribution (Papadopoulos 2020)
+    tnormal_scaled = list("tnormal", scaling=TRUE),         # the truncated normal distribution with the scaling property model (Wang and Schmidt 2002)
+    rayleigh       = list("rayleigh", scaling=FALSE),       # the Rayleigh distribution (Hajargasht 2015)
+    uniform        = list("uniform", scaling=FALSE),        # the uniform distribution (Li 1996, Nguyen 2010)
+    gamma          = list("gamma", scaling=FALSE),          # the Gamma distribution (Greene 2003)
+    lognormal      = list("lognormal", scaling=FALSE),      # the log normal distribution (Migon and Medici 2001, Wang and Ye 2020)
+    weibull        = list("weibull", scaling=FALSE)         # the Weibull distribution (Tsionas 2007)
   )
-  return(list(FXNFORMS=FXNFORMS,DISTFORMS=DISTFORMS))
+  
+  # Return the list of functional forms and distribution forms.
+  return(list(FXNFORMS=FXNFORMS, DISTFORMS=DISTFORMS))
 }
-
 #---------------------------------------------
 # Equation editor                          ####
+# This function constructs the equations for the production function, inefficiency function, and production risk function.
+# Parameters:
+# - data: The dataset to be used.
+# - FXN: The functional form of the production function.
+# - outcome: The name of the dependent variable.
+# - slope_shifter: The variable for the slope shifter (default is "NONE").
+# - intercept_shifters: A list containing variables for intercept shifters.
+# - ulist: A list containing variables for the inefficiency function.
+# - vlist: A list containing variables for the production risk function.
+
 Fxn.equation_editor <- function(
     data,
     FXN,
@@ -299,29 +431,39 @@ Fxn.equation_editor <- function(
   
   #---------------------------------------------------
   # Production function                            ####
+  # Initialize the shifters formula with an intercept term
   shifters <- "~1"
   
+  # Loop through the continuous intercept shifters (Svarlist) and add them to the shifters formula
   if(!is.null(intercept_shifters$Svarlist)){
     for(sv in intercept_shifters$Svarlist){
+      # Only add the variable if its coefficient of variation is greater than a small threshold
       if(abs((sd(data[,sv],na.rm=T)/mean(data[,sv],na.rm=T))) > 0.001){ 
         shifters <- paste0(shifters,"+",sv)
       }
     }
   }
+  
+  # Loop through the categorical intercept shifters (Fvarlist) and add them to the shifters formula as factors
   if(!is.null(intercept_shifters$Fvarlist)){
     for(fv in intercept_shifters$Fvarlist){
+      # Only add the variable if it has more than one unique value and each category has a sufficient number of observations
       if(length(unique(as.character(data[,fv]))) > 1 & min(table(as.character(data[,fv]))/nrow(data))>0.0001){
         shifters <- paste0(shifters,"+",paste0("factor(",fv,")"))
       } 
     }
   }
   
+  # If no intercept shifters are provided, create the production function formula using only the FXN
   if(is.null(intercept_shifters$Svarlist) & is.null(intercept_shifters$Fvarlist)){
     prodfxn <- as.formula(paste0(outcome," ~",FXN[[1]]))
-  }else{
+  } else {
+    # Remove the initial intercept term if other shifters are present
     shifters <- gsub("~1[+]","",shifters)
+    # Create the production function formula with the FXN and shifters
     prodfxn <- as.formula(paste0(outcome,"~",FXN[[1]],"+",shifters))
     
+    # If a slope shifter is provided, modify the production function formula accordingly
     if(!slope_shifter %in% "NONE"){
       prodfxn <- as.formula(paste0(paste0(outcome,"~factor(",slope_shifter,")*(",FXN[[1]],") - (",FXN[[1]],")"),"+",shifters))
     }
@@ -329,221 +471,314 @@ Fxn.equation_editor <- function(
   
   #---------------------------------------------------
   # Inefficiency function                          ####
-  
+  # Initialize the inefficiency function formula with an intercept term
   uequ <- "~1"
+  
+  # Loop through the continuous variables in ulist (Svarlist) and add them to the inefficiency function formula
   if(!is.null(ulist$Svarlist)){
     for(sv in ulist$Svarlist){
+      # Only add the variable if its coefficient of variation is greater than a small threshold
       if(abs((sd(data[,sv],na.rm=T)/mean(data[,sv],na.rm=T))) > 0.001){ 
         uequ <- paste0(uequ,"+",sv)
       }
     }
   }
+  
+  # Loop through the categorical variables in ulist (Fvarlist) and add them to the inefficiency function formula as factors
   if(!is.null(ulist$Fvarlist)){
     for(fv in ulist$Fvarlist){
+      # Only add the variable if it has more than one unique value and each category has a sufficient number of observations
       if(length(unique(as.character(data[,fv]))) > 1 & min(table(as.character(data[,fv]))/nrow(data))>0.0001){
         uequ <- paste0(uequ,"+",paste0("factor(",fv,")"))
       } 
     }
   }
+  
+  # If no variables are provided for the inefficiency function, set uequ to NULL
   if(is.null(ulist$Svarlist) & is.null(ulist$Fvarlist)){
     uequ <- NULL
-  }else{
+  } else {
+    # Remove the initial intercept term if other variables are present
     uequ <- gsub("~1[+]","~",uequ)
+    # Convert the inefficiency function formula to a formula object
     uequ <- as.formula(uequ)
   }
   
   #---------------------------------------------------
   # Production Risk function                       ####
-  
+  # Initialize the production risk function formula with an intercept term
   vequ <- "~1"
+  
+  # Loop through the continuous variables in vlist (Svarlist) and add them to the production risk function formula
   if(!is.null(vlist$Svarlist)){
     for(sv in vlist$Svarlist){
+      # Only add the variable if its coefficient of variation is greater than a small threshold
       if(abs((sd(data[,sv],na.rm=T)/mean(data[,sv],na.rm=T))) > 0.001){ 
         vequ <- paste0(vequ,"+",sv)
       }
     }
   }
+  
+  # Loop through the categorical variables in vlist (Fvarlist) and add them to the production risk function formula as factors
   if(!is.null(vlist$Fvarlist)){
     for(fv in vlist$Fvarlist){
+      # Only add the variable if it has more than one unique value and each category has a sufficient number of observations
       if(length(unique(as.character(data[,fv]))) > 1 & min(table(as.character(data[,fv]))/nrow(data))>0.0001){
         vequ <- paste0(vequ,"+",paste0("factor(",fv,")"))
       } 
     }
   }
+  
+  # If no variables are provided for the production risk function, set vequ to NULL
   if(is.null(vlist$Svarlist) & is.null(vlist$Fvarlist)){
     vequ <- NULL
-  }else{
+  } else {
+    # Remove the initial intercept term if other variables are present
     vequ <- gsub("~1[+]","~",vequ)
+    # Convert the production risk function formula to a formula object
     vequ <- as.formula(vequ)
   }
   
   #---------------------------------------------------
-  
-  return(list(prodfxn=prodfxn,uequ=uequ,vequ=vequ))
+  # Return a list containing the formulas for the production function, inefficiency function, and production risk function
+  return(list(prodfxn=prodfxn, uequ=uequ, vequ=vequ))
 }
 #---------------------------------------------
 # Coef and vcov Organizer                  ####
-Fxn.fit_organizer <- function(fit,nX,FXN){
+# This function organizes the coefficients and the variance-covariance matrix from the fitted model.
+# Parameters:
+# - fit: The fitted model object.
+# - nX: The number of input variables.
+# - FXN: The functional form of the production function.
+
+Fxn.fit_organizer <- function(fit, nX, FXN) {
   
-  if(names(FXN) %in% c("TL","QD","CD","LN")){
-    tf <- ifelse(names(FXN) %in% c("TL","CD"),"lnI","I")
-    est_list <- c("(Intercept)",names(coef(fit))[names(coef(fit)) %in% paste0(tf,1:nX)])
-    est_name <- c(paste0("a_",0:nX))
-    xNames <- paste0(tf,1:nX)
-    for( i in 1:nX) {
-      for (j in 1:nX) {
-        if(i == j){
-          est_name <- c(est_name,paste0("b_",i,"_",j))
-          if(names(FXN) %in% c("TL","QD")) est_list <- c(est_list,paste0("I(1/2 * ",tf,i," * ",tf,j,")"))
+  # Check if the functional form is one of the specified types
+  if(names(FXN) %in% c("TL", "QD", "CD", "LN")) {
+    # Determine the prefix for the input variables based on the functional form
+    tf <- ifelse(names(FXN) %in% c("TL", "CD"), "lnI", "I")
+    
+    # Initialize the list of estimated coefficients and their names
+    est_list <- c("(Intercept)", names(coef(fit))[names(coef(fit)) %in% paste0(tf, 1:nX)])
+    est_name <- c(paste0("a_", 0:nX))
+    
+    # Initialize the list of input variable names
+    xNames <- paste0(tf, 1:nX)
+    
+    # Loop through all pairs of input variables to construct the interaction terms
+    for(i in 1:nX) {
+      for(j in 1:nX) {
+        # For diagonal elements (interaction of a variable with itself)
+        if(i == j) {
+          est_name <- c(est_name, paste0("b_", i, "_", j))
+          if(names(FXN) %in% c("TL", "QD")) est_list <- c(est_list, paste0("I(1/2 * ", tf, i, " * ", tf, j, ")"))
         }
-        if(i <  j){
-          est_name <- c(est_name,paste0("b_",i,"_",j))
-          if(names(FXN) %in% c("TL","QD")) est_list <- c(est_list,paste0(tf,i,":",tf,j))
+        # For off-diagonal elements (interaction of different variables)
+        if(i < j) {
+          est_name <- c(est_name, paste0("b_", i, "_", j))
+          if(names(FXN) %in% c("TL", "QD")) est_list <- c(est_list, paste0(tf, i, ":", tf, j))
         }
       }
     }
   }
   
+  # Extract the coefficients and the variance-covariance matrix for the estimated terms
   est_coef <- coef(fit)[est_list]
-  est_vcov <- vcov(fit)[est_list,est_list]
+  est_vcov <- vcov(fit)[est_list, est_list]
   
-  if(names(FXN) %in% c("CD","LN")){
-    est_coef <- c(est_coef,rep(0,(length(est_name)-length(est_coef))))
-    est_vcov_cdLN <- matrix(ncol=length(est_coef),nrow=length(est_coef),data=0)
-    for(ii in 1:nrow(est_vcov)){
-      for(jj in 1:nrow(est_vcov)){
-        est_vcov_cdLN[[ii,jj]] <- est_vcov[[ii,jj]]
-      } 
+  # If the functional form is Cobb-Douglas or Linear, handle the zero coefficients for interaction terms
+  if(names(FXN) %in% c("CD", "LN")) {
+    # Add zero coefficients for interaction terms
+    est_coef <- c(est_coef, rep(0, (length(est_name) - length(est_coef))))
+    
+    # Initialize a zero matrix for the variance-covariance matrix
+    est_vcov_cdLN <- matrix(ncol=length(est_coef), nrow=length(est_coef), data=0)
+    
+    # Loop through the variance-covariance matrix to fill in the values
+    for(ii in 1:nrow(est_vcov)) {
+      for(jj in 1:nrow(est_vcov)) {
+        est_vcov_cdLN[[ii, jj]] <- est_vcov[[ii, jj]]
+      }
     }
+    
+    # Update the variance-covariance matrix with the new matrix
     est_vcov <- est_vcov_cdLN
     rm(est_vcov_cdLN)
   }
   
+  # Set the column and row names of the variance-covariance matrix and the names of the coefficients
   colnames(est_vcov) <- rownames(est_vcov) <- names(est_coef) <- est_name
   
-  return(list(est_coef=est_coef,est_vcov=est_vcov,est_list=est_list))
+  # Return the organized coefficients and variance-covariance matrix
+  return(list(est_coef=est_coef, est_vcov=est_vcov, est_list=est_list))
 }
 #---------------------------------------------
 # sfaR Summary                             ####
+# This function generates a summary of the stochastic frontier analysis (SFA) model fit.
+# Parameters:
+# - fit: The fitted SFA model object.
 
-Fxn.sfaR_Summary <- function(fit){
+Fxn.sfaR_Summary <- function(fit) {
   
+  # Extract the maximum likelihood results from the fit summary and convert to a dataframe
   mlRes <- as.data.frame(summary(fit)$mlRes)
-  names(mlRes) <- c("Estimate","StdError","Zvalue","Pvalue")
+  # Rename the columns of the dataframe
+  names(mlRes) <- c("Estimate", "StdError", "Zvalue", "Pvalue")
+  # Add a column for the coefficient names
   mlRes$CoefName <- rownames(mlRes)
   
-  #Variances
+  # Create a dataframe to hold various statistics and test results
   TEST <- data.frame(
-    Nobs = ifelse(is.null(summary(fit)$Nobs),NA,summary(fit)$Nobs),
-    nXvar = ifelse(is.null(summary(fit)$nXvar),NA,summary(fit)$nXvar),
-    nuZUvar = ifelse(is.null(summary(fit)$nuZUvar),NA,summary(fit)$nuZUvar),
-    nvZVvar = ifelse(is.null(summary(fit)$nvZVvar),NA,summary(fit)$nvZVvar),
-    mlLoglik = ifelse(is.null(summary(fit)$mlLoglik),NA,summary(fit)$mlLoglik),
-    AIC = ifelse(is.null(summary(fit)$AIC),NA,summary(fit)$AIC),
-    BIC = ifelse(is.null(summary(fit)$BIC),NA,summary(fit)$BIC),
-    HQIC = ifelse(is.null(summary(fit)$HQIC),NA,summary(fit)$HQIC),
-    sigmavSq = ifelse(is.null(summary(fit)$sigmavSq),NA,summary(fit)$sigmavSq),
-    sigmauSq = ifelse(is.null(summary(fit)$sigmauSq),NA,summary(fit)$sigmauSq),
-    Varu = ifelse(is.null(summary(fit)$Varu),NA,summary(fit)$Varu),
-    Eu = ifelse(is.null(summary(fit)$Eu),NA,summary(fit)$Eu),
-    Expu = ifelse(is.null(summary(fit)$Expu),NA,summary(fit)$Expu))
+    Nobs = ifelse(is.null(summary(fit)$Nobs), NA, summary(fit)$Nobs),
+    nXvar = ifelse(is.null(summary(fit)$nXvar), NA, summary(fit)$nXvar),
+    nuZUvar = ifelse(is.null(summary(fit)$nuZUvar), NA, summary(fit)$nuZUvar),
+    nvZVvar = ifelse(is.null(summary(fit)$nvZVvar), NA, summary(fit)$nvZVvar),
+    mlLoglik = ifelse(is.null(summary(fit)$mlLoglik), NA, summary(fit)$mlLoglik),
+    AIC = ifelse(is.null(summary(fit)$AIC), NA, summary(fit)$AIC),
+    BIC = ifelse(is.null(summary(fit)$BIC), NA, summary(fit)$BIC),
+    HQIC = ifelse(is.null(summary(fit)$HQIC), NA, summary(fit)$HQIC),
+    sigmavSq = ifelse(is.null(summary(fit)$sigmavSq), NA, summary(fit)$sigmavSq),
+    sigmauSq = ifelse(is.null(summary(fit)$sigmauSq), NA, summary(fit)$sigmauSq),
+    Varu = ifelse(is.null(summary(fit)$Varu), NA, summary(fit)$Varu),
+    Eu = ifelse(is.null(summary(fit)$Eu), NA, summary(fit)$Eu),
+    Expu = ifelse(is.null(summary(fit)$Expu), NA, summary(fit)$Expu)
+  )
   
-  TEST$Sigma <- sqrt(TEST$sigmauSq+TEST$sigmavSq)
-  TEST$Gamma <- TEST$sigmauSq/(TEST$Sigma^2 )
-  #Log-likelihood value of the M(S)L estimation.
+  # Calculate additional statistics
+  TEST$Sigma <- sqrt(TEST$sigmauSq + TEST$sigmavSq)
+  TEST$Gamma <- TEST$sigmauSq / (TEST$Sigma^2)
+  # Log-likelihood value of the M(S)L estimation
   TEST$mlLoglik <- fit$mlLoglik
-  #Numeric. Skewness of the residuals of the OLS estimation.
+  # Skewness of the residuals of the OLS estimation
   TEST$olsSkew <- fit$olsSkew    
-  #Logical. Indicating whether the residuals of the OLS estimation have the expected skewness.
-  TEST$olsM3Okay <- as.numeric(fit$olsM3Okay %in% "Residuals have the expected skeweness olsM3Okay")
-  TEST <- data.frame(coef=t(TEST[1,]),name=names(TEST))
-  names(TEST) <- c("Estimate","CoefName")
+  # Indicate whether the residuals of the OLS estimation have the expected skewness
+  TEST$olsM3Okay <- as.numeric(fit$olsM3Okay %in% "Residuals have the expected skewness olsM3Okay")
+  # Transpose the TEST dataframe
+  TEST <- data.frame(coef = t(TEST[1,]), name = names(TEST))
+  # Rename the columns of the TEST dataframe
+  names(TEST) <- c("Estimate", "CoefName")
+  # Add a column for p-values, initially set to NA
   TEST$Pvalue <- NA
-  #Coelli’s test for OLS residuals skewness. (See Coelli, 1995).
-  TEST <- rbind(TEST,data.frame(CoefName="CoelliM3Test",Estimate=fit$CoelliM3Test[1],Pvalue=fit$CoelliM3Test[2]))
-  #D’Agostino’s test for OLS residuals skewness. (See D’Agostino and Pearson,1973).
-  TEST <- rbind(TEST,data.frame(CoefName=c("AgostinoOmn","AgostinoSkw","AgostinoKrt"),
-                                Estimate=fit$AgostinoTest@test$statistic,
-                                Pvalue=fit$AgostinoTest@test$p.value))
-  #Likelihood Ratio Test of Inefficiency
-  TEST <- rbind(TEST,data.frame(
-    CoefName=c("LRInef"),
-    Estimate=summary(fit)$chisq ,
-    Pvalue=ifelse(summary(fit)$chisq>= emdbook::qchibarsq(0.99,  df = summary(fit)$df),0.01,
-                  ifelse(summary(fit)$chisq>=emdbook::qchibarsq(0.95, df = summary(fit)$df),0.05,
-                         ifelse(summary(fit)$chisq>=emdbook::qchibarsq(0.90, df = summary(fit)$df),0.10,
-                                1)))))
-  mlRes <- as.data.frame(data.table::rbindlist(list(mlRes,TEST), fill = TRUE))
+  
+  # Coelli’s test for OLS residuals skewness
+  TEST <- rbind(TEST, data.frame(CoefName = "CoelliM3Test", Estimate = fit$CoelliM3Test[1], Pvalue = fit$CoelliM3Test[2]))
+  
+  # D’Agostino’s test for OLS residuals skewness
+  TEST <- rbind(TEST, data.frame(
+    CoefName = c("AgostinoOmn", "AgostinoSkw", "AgostinoKrt"),
+    Estimate = fit$AgostinoTest@test$statistic,
+    Pvalue = fit$AgostinoTest@test$p.value
+  ))
+  
+  # Likelihood Ratio Test of Inefficiency
+  TEST <- rbind(TEST, data.frame(
+    CoefName = c("LRInef"),
+    Estimate = summary(fit)$chisq,
+    Pvalue = ifelse(summary(fit)$chisq >= emdbook::qchibarsq(0.99, df = summary(fit)$df), 0.01,
+                    ifelse(summary(fit)$chisq >= emdbook::qchibarsq(0.95, df = summary(fit)$df), 0.05,
+                           ifelse(summary(fit)$chisq >= emdbook::qchibarsq(0.90, df = summary(fit)$df), 0.10, 1)))
+  ))
+  
+  # Combine the maximum likelihood results and the test results into one dataframe
+  mlRes <- as.data.frame(data.table::rbindlist(list(mlRes, TEST), fill = TRUE))
+  
+  # Return the combined dataframe
   return(mlRes)
 }
 #---------------------------------------------
 # SF Work Horse                            ####
+# This function fits a stochastic frontier model with various configurations and options.
+# Parameters:
+# - data: The dataset to be used.
+# - yvar: The name of the dependent variable.
+# - xlist: List of independent variables.
+# - wvar: Weight variable.
+# - d: Distribution form.
+# - f: Functional form.
+# - slope_shifter: Variable for the slope shifter (default is "NONE").
+# - intercept_shifters: Variables for intercept shifters.
+# - ulist: Variables for the inefficiency function.
+# - vlist: Variables for the production risk function.
+# - UID: Unique identifier.
+# - TREND: Boolean indicating whether to include a trend variable (default is FALSE).
 
 Fxn.SF_WorkHorse_FT <- function(
-    data,yvar,xlist,wvar=NULL,d,f,
+    data, yvar, xlist, wvar=NULL, d, f,
     slope_shifter="NONE",
-    intercept_shifters= NULL,
-    ulist = NULL,
-    vlist = NULL,
+    intercept_shifters=NULL,
+    ulist=NULL,
+    vlist=NULL,
     UID,
-    TREND=FALSE){
+    TREND=FALSE) {
   
-  # data <- arms[arms$FMTYPOL %in% 7,] ; f <- 3
-  
+  # Number of independent variables
   nX <- length(xlist)
-  xNames <- paste0("I",1:nX)
+  xNames <- paste0("I", 1:nX)
   
-  SF_forms  <- Fxn_SF_forms(nX=nX,TREND=TREND)
-  FXN       <- SF_forms$FXNFORMS[f]
-  udist     <- SF_forms$DISTFORMS[d][[1]][[1]]
-  scaling   <- SF_forms$DISTFORMS[d][[1]][[2]]
-  logDepVar <- names(FXN) %in% c("CD","TL","GP","TP")
-  if(logDepVar %in% TRUE) xNames <- paste0("ln",xNames)
+  # Get the functional forms and distribution forms
+  SF_forms <- Fxn_SF_forms(nX=nX, TREND=TREND)
+  FXN <- SF_forms$FXNFORMS[f]
+  udist <- SF_forms$DISTFORMS[d][[1]][[1]]
+  scaling <- SF_forms$DISTFORMS[d][[1]][[2]]
   
-  if(is.null(wvar))  data$weights <- 1
-  if(!is.null(wvar)) data$weights <- data[,wvar]
-  data$Y       <- data[,yvar]
-  if(logDepVar %in% TRUE) data$lnY <- log(data$Y)
-  for(i in 1:nX){
-    data[,paste0("I",i)]   <- data[,xlist[i]]  
-    if(logDepVar %in% TRUE) data[,paste0("lnI",i)] <- log(data[,paste0("I",i)] + 0.00001)
+  # Determine if the dependent variable should be logged
+  logDepVar <- names(FXN) %in% c("CD", "TL", "GP", "TP")
+  if(logDepVar) xNames <- paste0("ln", xNames)
+  
+  # Set weights
+  if(is.null(wvar)) data$weights <- 1
+  if(!is.null(wvar)) data$weights <- data[, wvar]
+  
+  # Set the dependent variable
+  data$Y <- data[, yvar]
+  if(logDepVar) data$lnY <- log(data$Y)
+  
+  # Create the independent variables
+  for(i in 1:nX) {
+    data[, paste0("I", i)] <- data[, xlist[i]]  
+    if(logDepVar) data[, paste0("lnI", i)] <- log(data[, paste0("I", i)] + 0.00001)
   }
   
-  if(TREND %in% TRUE){
-    data[,paste0("I",nX)]   <- data[,xlist[nX]]
-    if(logDepVar %in% TRUE) data[,paste0("lnI",nX)] <- data[,xlist[nX]]
+  # Include trend variable if specified
+  if(TREND) {
+    data[, paste0("I", nX)] <- data[, xlist[nX]]
+    if(logDepVar) data[, paste0("lnI", nX)] <- data[, xlist[nX]]
   }
   
-  #Unrestricted Stochastic Frontier Estimation
-  equations <- Fxn.equation_editor(outcome=ifelse(logDepVar,"lnY","Y"),
-                                   data=data,FXN=FXN,slope_shifter=slope_shifter,
-                                   intercept_shifters=intercept_shifters,ulist=ulist,vlist=vlist)
+  # Create the equations for the production function, inefficiency function, and risk function
+  equations <- Fxn.equation_editor(
+    outcome=ifelse(logDepVar, "lnY", "Y"),
+    data=data, FXN=FXN, slope_shifter=slope_shifter,
+    intercept_shifters=intercept_shifters, ulist=ulist, vlist=vlist
+  )
   
   sf <- list(optStatus="")
-  for(sf_gradtol in c(1e-6,1e-3)){
-    for(sf_tol in c(1e-12,1e-6)){
-      for(sf_method in c('nr','nm','bfgs','bhhh','cg','sann','ucminf','mla','sr1','sparse','nlminb')){
-        if(!sf$optStatus %in% "successful convergence "){
+  
+  # Try different optimization methods and tolerances until a successful convergence is achieved
+  for(sf_gradtol in c(1e-6, 1e-3)) {
+    for(sf_tol in c(1e-12, 1e-6)) {
+      for(sf_method in c('nr', 'nm', 'bfgs', 'bhhh', 'cg', 'sann', 'ucminf', 'mla', 'sr1', 'sparse', 'nlminb')) {
+        if(!sf$optStatus %in% "successful convergence ") {
           tryCatch({
-            if(is.null(equations$uequ)  &  is.null(equations$vequ)){
+            if(is.null(equations$uequ) & is.null(equations$vequ)) {
               sf <- sfacross(formula = equations$prodfxn, udist = udist,
                              scaling = scaling, S = 1, method = sf_method, logDepVar=logDepVar, data = data,
-                             gradtol=sf_gradtol,tol=sf_tol)
+                             gradtol=sf_gradtol, tol=sf_tol)
             }
-            if(!is.null(equations$uequ) &  is.null(equations$vequ)){
+            if(!is.null(equations$uequ) & is.null(equations$vequ)) {
               sf <- sfacross(formula = equations$prodfxn, udist = udist, uhet = equations$uequ, muhet = equations$uequ,
                              scaling = scaling, S = 1, method = sf_method, logDepVar=logDepVar, data = data,
-                             gradtol=sf_gradtol,tol=sf_tol)
+                             gradtol=sf_gradtol, tol=sf_tol)
             }
-            if(is.null(equations$uequ)  & !is.null(equations$vequ)){
+            if(is.null(equations$uequ) & !is.null(equations$vequ)) {
               sf <- sfacross(formula = equations$prodfxn, udist = udist, vhet = equations$vequ,
                              scaling = scaling, S = 1, method = sf_method, logDepVar=logDepVar, data = data,
-                             gradtol=sf_gradtol,tol=sf_tol)
+                             gradtol=sf_gradtol, tol=sf_tol)
             }
-            if(!is.null(equations$uequ) & !is.null(equations$vequ)){
+            if(!is.null(equations$uequ) & !is.null(equations$vequ)) {
               sf <- sfacross(formula = equations$prodfxn, uhet = equations$uequ, muhet = equations$uequ, 
-                             vhet = equations$vequ, udist = udist,scaling = scaling, S = 1, method = sf_method, 
-                             logDepVar=logDepVar, data = data,gradtol=sf_gradtol,tol=sf_tol)
+                             vhet = equations$vequ, udist = udist, scaling = scaling, S = 1, method = sf_method, 
+                             logDepVar=logDepVar, data = data, gradtol=sf_gradtol, tol=sf_tol)
             }
           }, error=function(e){})
         }
@@ -551,186 +786,172 @@ Fxn.SF_WorkHorse_FT <- function(
     }
   }
   
-  # summary(sf)
+  # Extract efficiencies and fitted values
   ef <- sfaR::efficiencies(sf)
-  ef <- data.frame(data[row.names(ef),c(UID,"weights")],ef)
+  ef <- data.frame(data[row.names(ef), c(UID, "weights")], ef)
   ef$mlFitted <- sf$dataTable$mlFitted
-  if(logDepVar %in% TRUE){ ef$mlFitted <- exp(ef$mlFitted)}
+  if(logDepVar) { ef$mlFitted <- exp(ef$mlFitted) }
   
   data <- data[row.names(ef),]
   
-  rk <- data.frame(data[c(UID,"weights")])
-  if(logDepVar %in% TRUE){
-    rk$ybar  <- ef$mlFitted*exp(-ef$u)
-    rk$vrbr <- (rk$ybar-exp(sf$dataTable$lnY))^2
+  rk <- data.frame(data[c(UID, "weights")])
+  if(logDepVar) {
+    rk$ybar <- ef$mlFitted * exp(-ef$u)
+    rk$vrbr <- (rk$ybar - exp(sf$dataTable$lnY))^2
   }
-  if(!logDepVar %in% TRUE){
+  if(!logDepVar) {
     rk$ybar <- ef$mlFitted - ef$u
-    rk$vrbr <- (rk$ybar-sf$dataTable$Y)^2
+    rk$vrbr <- (rk$ybar - sf$dataTable$Y)^2
   }
-  rk$risk <- sqrt(rk$vrbr)/rk$ybar
-  rk <- rk[c(UID,"weights","risk")]
+  rk$risk <- sqrt(rk$vrbr) / rk$ybar
+  rk <- rk[c(UID, "weights", "risk")]
   
+  # Summarize the results
   sf_res <- Fxn.sfaR_Summary(sf)
-  
-  fit_organizer <- Fxn.fit_organizer(fit=sf,nX=nX,FXN=FXN)
+  fit_organizer <- Fxn.fit_organizer(fit=sf, nX=nX, FXN=FXN)
   est_coef <- fit_organizer$est_coef
   est_vcov <- fit_organizer$est_vcov
   est_list <- fit_organizer$est_list
+  el <- translogEla(xNames=xNames, data=data, coef=est_coef, dataLogged=logDepVar)
+  names(el) <- paste0("el", 1:ncol(el))
+  if(!TREND) { el[, paste0("el", (ncol(el)+1))] <- rowSums(el) }
+  if(TREND) { el[, paste0("el", (ncol(el)+1))] <- rowSums(el[1:(ncol(el)-1)]) }
+  el <- data.frame(data[c(UID, "weights")], el)
   
-  el <- translogEla(xNames=xNames,data = data, coef = est_coef,dataLogged =logDepVar)
-  names(el) <- paste0("el",1:ncol(el))
-  if(!TREND %in% TRUE){el[,paste0("el",(ncol(el)+1))] <- rowSums(el)}
-  if(TREND %in% TRUE ){el[,paste0("el",(ncol(el)+1))] <- rowSums(el[1:(ncol(el)-1)])}
-  
-  el <- data.frame(data[c(UID,"weights")],el)
-  
-  # Test Curvature & Monotonicity
-  if(names(FXN) %in% c("TL","QD")){
-    mono_obs <- translogCheckMono(xNames = xNames,data = data, coef = est_coef,dataLogged =logDepVar)$obs
-    curv_obs <- translogCheckCurvature(xNames = xNames,data=data, est_coef, convexity = F, quasi = TRUE ,dataLogged =logDepVar)$obs
-    curv <- mean(curv_obs,na.rm=T) # quasiconcave
-    mono <- mean(mono_obs,na.rm=T)
+  # Check curvature and monotonicity for different functional forms
+  if(names(FXN) %in% c("TL", "QD")) {
+    mono_obs <- translogCheckMono(xNames = xNames, data=data, coef=est_coef, dataLogged=logDepVar)$obs
+    curv_obs <- translogCheckCurvature(xNames = xNames, data=data, est_coef, convexity=F, quasi=TRUE, dataLogged=logDepVar)$obs
+    curv <- mean(curv_obs, na.rm=T)
+    mono <- mean(mono_obs, na.rm=T)
   }
   
-  if(names(FXN) %in% c("CD","LN")){
-    curv <- mono <- as.numeric(mean(as.numeric(est_coef[2:(nX+1)] > 0),na.rm=T) %in% 1)
-    # if(curv %in% 1){
-    #   mono_obs <- rep(1,nrow(data))
-    #   curv_obs <- rep(1,nrow(data))
-    # }else{
-    #   mono_obs <- rep(0,nrow(data))
-    #   curv_obs <- rep(0,nrow(data))
-    # }
+  if(names(FXN) %in% c("CD", "LN")) {
+    curv <- mono <- as.numeric(mean(as.numeric(est_coef[2:(nX+1)] > 0), na.rm=T) %in% 1)
   }
   
-  mc <- data.frame(CoefName=c("mono","curv"),Estimate=c(mono,curv),StdError=NA,Zvalue=NA,Pvalue=NA)
+  mc <- data.frame(CoefName=c("mono", "curv"), Estimate=c(mono, curv), StdError=NA, Zvalue=NA, Pvalue=NA)
   
-  if(mono<0.80){
-    
-    if(names(FXN) %in% c("TL","QD")){
-      # Use Minimum Distance estimation of Restricted production function coefficients 
-      monoRestr <- translogMonoRestr(xNames = xNames,data=data,dataLogged = logDepVar)
+  if(mono < 0.80) {
+    # Use minimum distance estimation of restricted production function coefficients
+    if(names(FXN) %in% c("TL", "QD")) {
+      monoRestr <- translogMonoRestr(xNames=xNames, data=data, dataLogged=logDepVar)
       monoRestr <- monoRestr[rowMeans(is.finite(monoRestr)) %in% 1,]
-      
       sf_minDist <- NULL
       
-      if(is.null(sf_minDist)){
+      if(is.null(sf_minDist)) {
         tryCatch({
           inv_est_vcov <- solve(est_vcov)
-          sf_minDist <- solve.QP(Dmat=inv_est_vcov,dvec=rep(0,length(est_coef)),Amat=t(monoRestr),bvec=-monoRestr%*%est_coef)
-          if(is.null(sf_minDist)){
+          sf_minDist <- solve.QP(Dmat=inv_est_vcov, dvec=rep(0, length(est_coef)), Amat=t(monoRestr), bvec=-monoRestr %*% est_coef)
+          if(is.null(sf_minDist)) {
             tryCatch({
-              # Find nearest positive definite matrix
               inv_est_vcov <- corpcor::make.positive.definite(inv_est_vcov)
-              sf_minDist   <- solve.QP(Dmat=inv_est_vcov,dvec=rep(0,length(est_coef)),Amat=t(monoRestr),bvec=-monoRestr%*%est_coef)
+              sf_minDist <- solve.QP(Dmat=inv_est_vcov, dvec=rep(0, length(est_coef)), Amat=t(monoRestr), bvec=-monoRestr %*% est_coef)
             }, error=function(e){})
           }
         }, error=function(e){})
       }
       
-      if(is.null(sf_minDist)){
+      if(is.null(sf_minDist)) {
         tryCatch({
           inv_est_vcov <- Matrix::solve(est_vcov)
-          sf_minDist <- solve.QP(Dmat=inv_est_vcov,dvec=rep(0,length(est_coef)),Amat=t(monoRestr),bvec=-monoRestr%*%est_coef)
-          if(is.null(sf_minDist)){
+          sf_minDist <- solve.QP(Dmat=inv_est_vcov, dvec=rep(0, length(est_coef)), Amat=t(monoRestr), bvec=-monoRestr %*% est_coef)
+          if(is.null(sf_minDist)) {
             tryCatch({
-              # Find nearest positive definite matrix
-              inv_est_vcov <-corpcor::make.positive.definite(inv_est_vcov)
-              sf_minDist <- solve.QP(Dmat=inv_est_vcov,dvec=rep(0,length(est_coef)),Amat=t(monoRestr),bvec=-monoRestr%*%est_coef)
+              inv_est_vcov <- corpcor::make.positive.definite(inv_est_vcov)
+              sf_minDist <- solve.QP(Dmat=inv_est_vcov, dvec=rep(0, length(est_coef)), Amat=t(monoRestr), bvec=-monoRestr %*% est_coef)
             }, error=function(e){})
           }
         }, error=function(e){})
       }
       
-      if(is.null(sf_minDist)){
+      if(is.null(sf_minDist)) {
         tryCatch({
           inv_est_vcov <- MASS::ginv(est_vcov)
-          sf_minDist <- solve.QP(Dmat=inv_est_vcov,dvec=rep(0,length(est_coef)),Amat=t(monoRestr),bvec=-monoRestr%*%est_coef)
-          
-          if(is.null(sf_minDist)){
+          sf_minDist <- solve.QP(Dmat=inv_est_vcov, dvec=rep(0, length(est_coef)), Amat=t(monoRestr), bvec=-monoRestr %*% est_coef)
+          if(is.null(sf_minDist)) {
             tryCatch({
-              # Find nearest positive definite matrix
-              inv_est_vcov <-corpcor::make.positive.definite(inv_est_vcov)
-              sf_minDist <- solve.QP(Dmat=inv_est_vcov,dvec=rep(0,length(est_coef)),Amat=t(monoRestr),bvec=-monoRestr%*%est_coef)
+              inv_est_vcov <- corpcor::make.positive.definite(inv_est_vcov)
+              sf_minDist <- solve.QP(Dmat=inv_est_vcov, dvec=rep(0, length(est_coef)), Amat=t(monoRestr), bvec=-monoRestr %*% est_coef)
             }, error=function(e){})
           }
-          
         }, error=function(e){})
       }
       
-      if(is.null(sf_minDist)){
+      if(is.null(sf_minDist)) {
         tryCatch({
-          inv_est_vcov <- matrix(0,nrow(est_vcov),nrow(est_vcov))
+          inv_est_vcov <- matrix(0, nrow(est_vcov), nrow(est_vcov))
           diag(inv_est_vcov) <- 1
-          sf_minDist <- solve.QP(Dmat=inv_est_vcov,dvec=rep(0,length(est_coef)),Amat=t(monoRestr),bvec=-monoRestr%*%est_coef)
+          sf_minDist <- solve.QP(Dmat=inv_est_vcov, dvec=rep(0, length(est_coef)), Amat=t(monoRestr), bvec=-monoRestr %*% est_coef)
         }, error=function(e){})
       }
       
-      est_coefc  <- sf_minDist$solution + est_coef
+      est_coefc <- sf_minDist$solution + est_coef
       
-      # Fitted frontire output of the restricted model (assuming efficiency == 1)
-      lcFitted <- translogCalc( xNames = xNames,data=data,coef=est_coefc,dataLogged = logDepVar)
-      # list(est_coefc=est_coefc, lcFitted = lcFitted)
+      # Fitted frontier output of the restricted model (assuming efficiency == 1)
+      lcFitted <- translogCalc(xNames=xNames, data=data, coef=est_coefc, dataLogged=logDepVar)
     }
     
-    if(names(FXN) %in% c("CD","LN")){
-      Y <- all.vars(Fxn.equation_editor(outcome=ifelse(logDepVar,"lnY","Y"),data=data,FXN=FXN)$prodfxn)[1]
-      X <- all.vars(Fxn.equation_editor(outcome=ifelse(logDepVar,"lnY","Y"),data=data,FXN=FXN)$prodfxn[-2])
+    if(names(FXN) %in% c("CD", "LN")) {
+      Y <- all.vars(Fxn.equation_editor(outcome=ifelse(logDepVar, "lnY", "Y"), data=data, FXN=FXN)$prodfxn)[1]
+      X <- all.vars(Fxn.equation_editor(outcome=ifelse(logDepVar, "lnY", "Y"), data=data, FXN=FXN)$prodfxn[-2])
       data.sem <- data
-      data.sem[,X] <- 0
-      fit.sem <- lm(equations$prodfxn,data=data)
+      data.sem[, X] <- 0
+      fit.sem <- lm(equations$prodfxn, data=data)
       fit.sem$coefficients <- coef(sf)
-      data.sem$const <- predict(fit.sem,data.sem)
-      data.sem[,X] <- data[,X]
-      fit.sem <- lavaan::lavaan(model = paste(paste0(Y,' ~ a_c*const+ ',paste0(paste0(paste0("a_",1:length(X)),"^2*",X),collapse = "+")),
-                                              paste0(Y,' ~ a_0*1'),paste0(Y,' ~~ ',Y), sep = ' \n '), 
-                                constraints ="a_c==1",
-                                data = data.sem, model.type = "sem", estimator="ML")
+      data.sem$const <- predict(fit.sem, data.sem)
+      data.sem[, X] <- data[, X]
+      fit.sem <- lavaan::lavaan(
+        model = paste(paste0(Y, ' ~ a_c*const+ ', paste0(paste0(paste0("a_", 1:length(X)), "^2*", X), collapse = "+")),
+                      paste0(Y, ' ~ a_0*1'), paste0(Y, ' ~~ ', Y), sep = ' \n '), 
+        constraints="a_c==1",
+        data=data.sem, model.type="sem", estimator="ML"
+      )
       lcFitted <- lavaan::lavPredictY(fit.sem) - data.sem$const
-      fit.sem  <- lavaan::summary(fit.sem,standardized = TRUE)
-      fit.sem  <- fit.sem$pe[grepl("a_",fit.sem$pe$label),c("label","est")]
-      fit.sem  <- fit.sem[!fit.sem$label %in% "a_c",]
-      fit.sem  <- fit.sem[order(fit.sem$label),]
+      fit.sem <- lavaan::summary(fit.sem, standardized=TRUE)
+      fit.sem <- fit.sem$pe[grepl("a_", fit.sem$pe$label), c("label", "est")]
+      fit.sem <- fit.sem[!fit.sem$label %in% "a_c",]
+      fit.sem <- fit.sem[order(fit.sem$label),]
       est_coefc <- est_coef
-      for(xx in fit.sem$label){
+      for(xx in fit.sem$label) {
         est_coefc[xx] <- fit.sem[fit.sem$label %in% xx, "est"]^2
       }
-      
-      # list(est_coefc=est_coefc, lcFitted = lcFitted)
     }
     
-    # Estimate stochatic frontier model with the constrained frontier
-    data$lcFitted <- lcFitted 
-    equations <- Fxn.equation_editor(outcome=ifelse(logDepVar,"lnY","Y"),
-                                     data=data,FXN="lcFitted",slope_shifter=slope_shifter,
-                                     intercept_shifters=intercept_shifters,ulist=ulist,vlist=vlist)
+    # Estimate stochastic frontier model with the constrained frontier
+    data$lcFitted <- lcFitted
+    equations <- Fxn.equation_editor(
+      outcome=ifelse(logDepVar, "lnY", "Y"),
+      data=data, FXN="lcFitted", slope_shifter=slope_shifter,
+      intercept_shifters=intercept_shifters, ulist=ulist, vlist=vlist
+    )
     
+    # Try different optimization methods and tolerances until a successful convergence is achieved
     sfc <- list(optStatus="")
-    for(sf_gradtol in c(1e-6,1e-3)){
-      for(sf_tol in c(1e-12,1e-6)){
-        for(sf_method in c('nr','nm','bfgs','bhhh','cg','sann','ucminf','mla','sr1','sparse','nlminb')){
-          if(!sfc$optStatus %in% "successful convergence "){
+    for(sf_gradtol in c(1e-6, 1e-3)) {
+      for(sf_tol in c(1e-12, 1e-6)) {
+        for(sf_method in c('nr', 'nm', 'bfgs', 'bhhh', 'cg', 'sann', 'ucminf', 'mla', 'sr1', 'sparse', 'nlminb')) {
+          if(!sfc$optStatus %in% "successful convergence ") {
             tryCatch({
-              if(is.null(equations$uequ)  &  is.null(equations$vequ)){
+              if(is.null(equations$uequ) & is.null(equations$vequ)) {
                 sfc <- sfacross(formula = equations$prodfxn, udist = udist,
                                 scaling = scaling, S = 1, method = sf_method, logDepVar=logDepVar, data = data,
-                                gradtol=sf_gradtol,tol=sf_tol)
+                                gradtol=sf_gradtol, tol=sf_tol)
               }
-              if(!is.null(equations$uequ) &  is.null(equations$vequ)){
+              if(!is.null(equations$uequ) & is.null(equations$vequ)) {
                 sfc <- sfacross(formula = equations$prodfxn, udist = udist, uhet = equations$uequ, muhet = equations$uequ,
                                 scaling = scaling, S = 1, method = sf_method, logDepVar=logDepVar, data = data,
-                                gradtol=sf_gradtol,tol=sf_tol)
+                                gradtol=sf_gradtol, tol=sf_tol)
               }
-              if(is.null(equations$uequ)  & !is.null(equations$vequ)){
+              if(is.null(equations$uequ) & !is.null(equations$vequ)) {
                 sfc <- sfacross(formula = equations$prodfxn, udist = udist, vhet = equations$vequ,
                                 scaling = scaling, S = 1, method = sf_method, logDepVar=logDepVar, data = data,
-                                gradtol=sf_gradtol,tol=sf_tol)
+                                gradtol=sf_gradtol, tol=sf_tol)
               }
-              if(!is.null(equations$uequ) & !is.null(equations$vequ)){
+              if(!is.null(equations$uequ) & !is.null(equations$vequ)) {
                 sfc <- sfacross(formula = equations$prodfxn, uhet = equations$uequ, muhet = equations$uequ, 
-                                vhet = equations$vequ, udist = udist,scaling = scaling, S = 1, method = sf_method, 
-                                logDepVar=logDepVar, data = data,gradtol=sf_gradtol,tol=sf_tol)
+                                vhet = equations$vequ, udist = udist, scaling = scaling, S = 1, method = sf_method, 
+                                logDepVar=logDepVar, data = data, gradtol=sf_gradtol, tol=sf_tol)
               }
             }, error=function(e){})
           }
@@ -738,32 +959,30 @@ Fxn.SF_WorkHorse_FT <- function(
       }
     }
     
-    # summary(sfc)
-    est_coefca    <- est_coefc*coef(sfc)["lcFitted"]
+    est_coefca <- est_coefc * coef(sfc)["lcFitted"]
     est_coefca[1] <- est_coefca[1] + coef(sfc)["(Intercept)"]
     
     efc <- sfaR::efficiencies(sfc)
-    #names(efc) <- paste0(names(efc),"_c")
-    efc <- data.frame(data[row.names(efc),c(UID,"weights")],efc)
+    efc <- data.frame(data[row.names(efc), c(UID, "weights")], efc)
     efc$mlFitted <- sfc$dataTable$mlFitted
-    if(logDepVar %in% TRUE){ efc$mlFitted <- exp(efc$mlFitted)}
+    if(logDepVar) { efc$mlFitted <- exp(efc$mlFitted) }
     
     data <- data[row.names(efc),]
     
-    rkc <- data.frame(data[c(UID,"weights")])
-    if(logDepVar %in% TRUE){
-      rkc$ybar  <- efc$mlFitted*exp(-efc$u)
-      rkc$vrbr <- (rkc$ybar-exp(sf$dataTable$lnY))^2
+    rkc <- data.frame(data[c(UID, "weights")])
+    if(logDepVar) {
+      rkc$ybar <- efc$mlFitted * exp(-efc$u)
+      rkc$vrbr <- (rkc$ybar - exp(sf$dataTable$lnY))^2
     }
-    if(!logDepVar %in% TRUE){
+    if(!logDepVar) {
       rkc$ybar <- efc$mlFitted - efc$u
-      rkc$vrbr <- (rkc$ybar-sf$dataTable$Y)^2
+      rkc$vrbr <- (rkc$ybar - sf$dataTable$Y)^2
     }
-    rkc$risk <- sqrt(rkc$vrbr)/rkc$ybar
-    rkc <- rkc[c(UID,"weights","risk")]
+    rkc$risk <- sqrt(rkc$vrbr) / rkc$ybar
+    rkc <- rkc[c(UID, "weights", "risk")]
     
-    elc <- translogEla(xNames=xNames,data = data, coef = est_coefca,dataLogged =logDepVar)
-    names(elc) <- paste0("el",1:ncol(elc))
+    elc <- translogEla(xNames=xNames, data=data, coef=est_coefca, dataLogged=logDepVar)
+    names(elc) <- paste0("el", 1:ncol(elc))
     if(!TREND %in% TRUE){elc[,paste0("el",(ncol(elc)+1))] <- rowSums(elc)}
     if(TREND %in% TRUE ){elc[,paste0("el",(ncol(elc)+1))] <- rowSums(elc[1:(ncol(elc)-1)])}
     elc <- data.frame(data[c(UID,"weights")],elc)
@@ -819,6 +1038,26 @@ Fxn.SF_WorkHorse_FT <- function(
 
 #---------------------------------------------
 # MSF Work Horse                           ####
+# This function performs Meta Stochastic Frontier (MSF) analysis with various configurations and options.
+# Parameters:
+# - data: The dataset to be used.
+# - yvar: The name of the dependent variable.
+# - xlist: List of independent variables.
+# - ulist: Variables for the inefficiency function.
+# - vlist: Variables for the production risk function.
+# - wvar: Weight variable.
+# - slope_shifter: Variable for the slope shifter (default is "NONE").
+# - intercept_shifters: Variables for intercept shifters.
+# - f: Functional form.
+# - d: Distribution form.
+# - UID: Unique identifier.
+# - TREND: Boolean indicating whether to include a trend variable (default is FALSE).
+# - tvar: Technology variable.
+# - nnm: Nearest neighbor matching variable.
+# - ulistM: Variables for the inefficiency function in the matched sample.
+# - intercept_shiftersM: Variables for intercept shifters in the matched sample.
+
+
 Fxn.MSF_WorkHorse_FT <- function(
     data ,
     yvar,
@@ -1390,54 +1629,66 @@ Fxn.MSF_WorkHorse_FT <- function(
 }
 #---------------------------------------------
 # draw estimations                         ####
+# This function performs the draw estimations for the stochastic frontier analysis.
+# Parameters:
+# - draw: The draw iteration number.
+# - drawlist: The list of draws.
+# - surveyy: Boolean indicating whether to use survey data (default is FALSE).
+# - data: The dataset to be used.
+# - yvar: The name of the dependent variable.
+# - xlist: List of independent variables.
+# - ulist: Variables for the inefficiency function.
+# - vlist: Variables for the production risk function.
+# - wvar: Weight variable.
+# - slope_shifter: Variable for the slope shifter (default is "NONE").
+# - intercept_shifters: Variables for intercept shifters.
+# - f: Functional form.
+# - d: Distribution form.
+# - UID: Unique identifier.
+# - TREND: Boolean indicating whether to include a trend variable (default is FALSE).
+# - tvar: Technology variable.
+# - nnm: Nearest neighbor matching variable.
+# - ulistM: Variables for the inefficiency function in the matched sample.
+# - intercept_shiftersM: Variables for intercept shifters in the matched sample.
+# - disagscors_list: List of variables for disaggregated score summary.
 
 Fxn_draw_estimations <- function(
-    draw,
-    drawlist,
-    surveyy=FALSE,
-    data ,
-    yvar,
-    xlist,
-    ulist= NULL,
-    vlist=NULL,
-    wvar= NULL,
-    slope_shifter= "NONE",
-    intercept_shifters= NULL,
-    f,
-    d,
-    UID,
-    TREND=FALSE,
-    tvar=NULL,
-    nnm= NULL,
-    ulistM=NULL,
-    intercept_shiftersM=NULL,
-    disagscors_list=NULL){
+    draw, drawlist, surveyy=FALSE, data, yvar, xlist, ulist=NULL, vlist=NULL, wvar=NULL,
+    slope_shifter="NONE", intercept_shifters=NULL, f, d, UID, TREND=FALSE, tvar=NULL,
+    nnm=NULL, ulistM=NULL, intercept_shiftersM=NULL, disagscors_list=NULL) {
+  
   DONE <- NULL
   tryCatch({ 
     # draw <- 0
     #print(draw)
+    
     #---------------------------------------------
     # Data Preparation                         ####
-    data <- data[!data$EaId %in% c(t(drawlist[drawlist$ID %in% draw,2:ncol(drawlist)])),]
+    # Filter out rows based on drawlist
+    data <- data[!data$EaId %in% c(t(drawlist[drawlist$ID %in% draw, 2:ncol(drawlist)])),]
+    
     #---------------------------------------------
     # Survey estimations                       ####
-    cat(crayon::green("Survey estimations",Sys.time()),fill=T)
-    data$Surveyy <- data$Surveyx
-    if(surveyy %in% FALSE){
-      data$Surveyy <- "GLSS0"
-    } 
+    cat(crayon::green("Survey estimations", Sys.time()), fill=T)
     
+    # Set survey variable
+    data$Surveyy <- data$Surveyx
+    if(surveyy %in% FALSE) {
+      data$Surveyy <- "GLSS0"
+    }
+    
+    # Perform survey estimations for each unique survey
     res <- lapply(
       unique(data$Surveyy),
-      function(glss,draw){
+      function(glss, draw) {
         tryCatch({ 
           # glss <-"GLSS0"
           res <- Fxn.MSF_WorkHorse_FT(
-            data= data[data[,"Surveyy"] %in% glss,],yvar= yvar,xlist= xlist,
-            slope_shifter= slope_shifter,intercept_shifters = intercept_shifters,intercept_shiftersM=intercept_shiftersM,
-            ulist= ulist,ulistM=ulistM,vlist=vlist,wvar= wvar,f= f,d= d,UID= UID,tvar= tvar,nnm= nnm,TREND= TREND)
+            data=data[data[,"Surveyy"] %in% glss,], yvar=yvar, xlist=xlist,
+            slope_shifter=slope_shifter, intercept_shifters=intercept_shifters, intercept_shiftersM=intercept_shiftersM,
+            ulist=ulist, ulistM=ulistM, vlist=vlist, wvar=wvar, f=f, d=d, UID=UID, tvar=tvar, nnm=nnm, TREND=TREND)
           
-          function(){
+          function() {
             Main <- res$ef_mean
             Main <- Main[Main$Survey %in% "GLSS0",]
             Main <- Main[!Main$sample %in% "unmatched",]
@@ -1445,399 +1696,399 @@ Fxn_draw_estimations <- function(
             Main <- Main[Main$CoefName %in% "efficiencyGap_pct",]
             Main <- Main[Main$restrict %in% "Restricted",]
             Main <- Main[Main$estType %in% "teBC",]
-            Main[Main$type %in% "TGR",c("sample","type","Tech","Estimate")]
-            Main[Main$type %in% "TE",c("sample","type","Tech","Estimate")]
-            Main[Main$type %in% "MTE",c("sample","type","Tech","Estimate")]
+            Main[Main$type %in% "TGR", c("sample", "type", "Tech", "Estimate")]
+            Main[Main$type %in% "TE", c("sample", "type", "Tech", "Estimate")]
+            Main[Main$type %in% "MTE", c("sample", "type", "Tech", "Estimate")]
           }
           
-          
-          for(outcome in c("sf_estm","el_mean","ef_mean","rk_mean","ef_dist","rk_dist","el_samp","ef_samp","rk_samp")){
-            tryCatch({ res[[outcome]][,"Surveyy"] <- glss ;res[[outcome]][,"draw"] <- draw }, error=function(e){})
+          # Add survey and draw information to the results
+          for(outcome in c("sf_estm", "el_mean", "ef_mean", "rk_mean", "ef_dist", "rk_dist", "el_samp", "ef_samp", "rk_samp")) {
+            tryCatch({ res[[outcome]][,"Surveyy"] <- glss; res[[outcome]][,"draw"] <- draw }, error=function(e){})
           }
           
           return(res)
-        }, error = function(e){return(NULL)})},draw=draw)
+        }, error = function(e) { return(NULL) })}, draw=draw)
     
     res <- lapply(
-      c("sf_estm","el_mean","ef_mean","rk_mean","ef_dist","rk_dist","el_samp","ef_samp","rk_samp"),
-      function(outcome){return(as.data.frame(data.table::rbindlist(lapply(1:length(res),function(glss){return(res[[glss]][[outcome]])}), fill = TRUE)))})
-    names(res) <- c("sf_estm","el_mean","ef_mean","rk_mean","ef_dist","rk_dist","el_samp","ef_samp","rk_samp")
-
+      c("sf_estm", "el_mean", "ef_mean", "rk_mean", "ef_dist", "rk_dist", "el_samp", "ef_samp", "rk_samp"),
+      function(outcome) {
+        return(as.data.frame(data.table::rbindlist(lapply(1:length(res), function(glss) { return(res[[glss]][[outcome]]) }), fill = TRUE)))
+      })
+    names(res) <- c("sf_estm", "el_mean", "ef_mean", "rk_mean", "ef_dist", "rk_dist", "el_samp", "ef_samp", "rk_samp")
+    
     #---------------------------------------------
     # Disaggregated score summary              #### 
-    cat(crayon::green("Disaggregated score summary",Sys.time()),fill=T)
+    cat(crayon::green("Disaggregated score summary", Sys.time()), fill=T)
     disagscors <- NULL
-    if(! is.null(disagscors_list)){
+    if(!is.null(disagscors_list)) {
       disagscors <- as.data.frame(
         data.table::rbindlist(
           future_lapply(
             disagscors_list,
-            function(disagscors_var,scors,data){
+            function(disagscors_var, scors, data) {
               tryCatch({ 
-                
-                # disagscors_var <- disagscors_list[1];scors <- res$ef_samp
-                
                 scors00 <- scors
                 scors00$Survey <- "GLSS0"
-                scors <- rbind(scors,scors00)
+                scors <- rbind(scors, scors00)
                 rm(scors00)
                 
-                disagscors <- scors %>%  tidyr::gather(input, value, c("TE0","TE","TGR","MTE"))
-                disagscors <- disagscors[!disagscors$value %in% c(NA,Inf,-Inf,NaN),]
-                disagscors <- disagscors[disagscors$estType %in% c("teJLMS","teMO","teBC","teFTu","teFTm"),]
+                disagscors <- scors %>% tidyr::gather(input, value, c("TE0", "TE", "TGR", "MTE"))
+                disagscors <- disagscors[!disagscors$value %in% c(NA, Inf, -Inf, NaN),]
+                disagscors <- disagscors[disagscors$estType %in% c("teJLMS", "teMO", "teBC", "teFTu", "teFTm"),]
                 
-                disagscors <- dplyr::inner_join(disagscors,data[c("UID", "Survey", "CropID", "HhId", "EaId", "Mid",disagscors_var)],
+                disagscors <- dplyr::inner_join(disagscors, data[c("UID", "Survey", "CropID", "HhId", "EaId", "Mid", disagscors_var)],
                                                 by=c("UID", "Survey", "CropID", "HhId", "EaId", "Mid"))
-                disagscors$disagscors_level <- disagscors[,disagscors_var]
-                disagscors <- disagscors[!disagscors$disagscors_level %in% c(NA,Inf,-Inf,NaN),]
+                disagscors$disagscors_level <- disagscors[, disagscors_var]
+                disagscors <- disagscors[!disagscors$disagscors_level %in% c(NA, Inf, -Inf, NaN),]
                 
                 disagscors0 <- disagscors[disagscors$input %in% "TE0",]
-                disagscors0$Tech  <- -999
-                disagscors <- rbind(disagscors0,disagscors[! disagscors$input %in% "TE0",])
+                disagscors0$Tech <- -999
+                disagscors <- rbind(disagscors0, disagscors[!disagscors$input %in% "TE0",])
                 rm(disagscors0)
-                worklist <- unique(disagscors[c("sample","estType","Tech","input","restrict")])
+                worklist <- unique(disagscors[c("sample", "estType", "Tech", "input", "restrict")])
                 
                 disagscors <- as.data.frame(
                   data.table::rbindlist(
                     lapply(
                       1:nrow(worklist),
-                      function(kk,worklist,disagscors){
-                        # kk <- 1
-                        score.data <- dplyr::inner_join(worklist[kk,],disagscors,by=names(worklist))
-                        score.data <- score.data[!score.data$value %in% c(NA,NaN,Inf,-Inf),]
+                      function(kk, worklist, disagscors) {
+                        score.data <- dplyr::inner_join(worklist[kk,], disagscors, by=names(worklist))
+                        score.data <- score.data[!score.data$value %in% c(NA, NaN, Inf, -Inf),]
                         score.data0 <- score.data
                         score.data0$Survey <- "GLSS0"
-                        score.data <- rbind(score.data0,score.data)
+                        score.data <- rbind(score.data0, score.data)
                         rm(score.data0)
                         score.data <- doBy::summaryBy(
-                          list("value",c("Survey","disagscors_level")),
-                          FUN=function(x){
-                            w      <- score.data$Weight
-                            wmean  <- sum(x * w) / sum(w)
-                            mode   <- function(x,na.rm = T) {ux <- unique(x); ux[which.max(tabulate(match(x, ux)))]}
-                            mean   <- mean(x,na.rm=T)
-                            median <- median(x,na.rm=T)
-                            mode   <- mode(x,na.rm=T)
-                            stat   <- c(wmean,mean,median,mode)
-                            names(stat) <- c("wmean","mean","median","mode")
-                            return(stat)},data=score.data)
-                        names(score.data) <- gsub("value.","", names(score.data))
-                        score.data <- data.frame(worklist[kk,],score.data)
+                          list("value", c("Survey", "disagscors_level")),
+                          FUN=function(x) {
+                            w <- score.data$Weight
+                            wmean <- sum(x * w) / sum(w)
+                            mode <- function(x, na.rm=T) {ux <- unique(x); ux[which.max(tabulate(match(x, ux)))]}
+                            mean <- mean(x, na.rm=T)
+                            median <- median(x, na.rm=T)
+                            mode <- mode(x, na.rm=T)
+                            stat <- c(wmean, mean, median, mode)
+                            names(stat) <- c("wmean", "mean", "median", "mode")
+                            return(stat)
+                          }, data=score.data)
+                        names(score.data) <- gsub("value.", "", names(score.data))
+                        score.data <- data.frame(worklist[kk,], score.data)
                         return(score.data)
-                      },worklist=worklist,disagscors=disagscors), fill = TRUE))
+                      }, worklist=worklist, disagscors=disagscors), fill = TRUE))
                 
-                disagscors$disagscors_var <- ifelse(grepl("CROP_",disagscors_var),"CROP",disagscors_var)
+                disagscors$disagscors_var <- ifelse(grepl("CROP_", disagscors_var), "CROP", disagscors_var)
                 disagscors$CoefName <- "disag_efficiency"
                 return(disagscors)
-              }, error = function(e){return(NULL)})
+              }, error = function(e) { return(NULL) })
               
               return(DONE)
-            },scors=res$ef_samp,data=data), fill = TRUE))
-      disagscors$draw    <- draw
+            }, scors=res$ef_samp, data=data), fill = TRUE))
+      disagscors$draw <- draw
     }
     res$disagscors <- disagscors
+    
     #---------------------------------------------
     # Export                                   ####
-    if(!draw %in% 0){res[["el_samp"]] <- NULL; res[["ef_samp"]] <- NULL; res[["rk_samp"]] <- NULL}
+    if(!draw %in% 0) {res[["el_samp"]] <- NULL; res[["ef_samp"]] <- NULL; res[["rk_samp"]] <- NULL}
     return(res)
     #---------------------------------------------
-  }, error = function(e){return(NULL)})
-  }
-
+  }, error = function(e) {return(NULL)})
+}
 #---------------------------------------------
 # draw summary                             ####
-Fxn.draw_summary <- function(res,TechKey){
+# This function computes summary statistics from multiple draws of stochastic frontier analysis results.
+# Parameters:
+# - res: List of results from multiple draws.
+# - TechKey: Data frame containing technology keys.
+
+Fxn.draw_summary <- function(res, TechKey) {
   #---------------------------------------------------
   # Summary Estimates                              ####
-  sf_estm <- as.data.frame(data.table::rbindlist(lapply(1:length(res),function(draw){return(res[[draw]]$sf_estm)}), fill = TRUE))
-  sf_estm <- sf_estm[!sf_estm$Estimate %in% c(NA,Inf,-Inf,NaN),]
+  # Combine results from all draws for summary estimates
+  sf_estm <- as.data.frame(data.table::rbindlist(lapply(1:length(res), function(draw) { return(res[[draw]]$sf_estm) }), fill = TRUE))
+  sf_estm <- sf_estm[!sf_estm$Estimate %in% c(NA, Inf, -Inf, NaN),]
   sf_estm$Survey <- sf_estm$Surveyy
-
-  if(length(unique(sf_estm$Survey))>1){
+  
+  # Add GLSS0 survey if multiple surveys are present
+  if(length(unique(sf_estm$Survey)) > 1) {
     sf_estm00 <- sf_estm
     sf_estm00$Survey <- "GLSS0"
-    sf_estm <- rbind(sf_estm00,sf_estm)
+    sf_estm <- rbind(sf_estm00, sf_estm)
     rm(sf_estm00)
   }
   
+  # Filter specific conditions for summary estimates
   sf_estmX <- sf_estm[sf_estm$CoefName %in% "Nobs",]
   sf_estmX <- sf_estmX[sf_estmX$draw %in% 0,]
   sf_estmX <- sf_estmX[sf_estmX$restrict %in% "Unrestricted",]
   sf_estmX <- sf_estmX[sf_estmX$Tech %in% 999,]
   sf_estmX <- sf_estmX[sf_estmX$sample %in% "unmatched",]
   
+  # Calculate summary statistics for the estimates
   sf_estm <- dplyr::inner_join(
-    sf_estm[sf_estm$draw %in% 0,c("Survey","CoefName","Tech","sample","restrict","Estimate","StdError","Zvalue","Pvalue")],
-    doBy::summaryBy(list(c("Estimate"),c("Survey","CoefName","Tech","sample","restrict")),
-                    data=sf_estm[!sf_estm$draw %in% 0,],FUN=c(mean,sd,length)),
-    by=c("Survey","CoefName","Tech","sample","restrict"))
-  sf_estm$jack_zv  <- sf_estm$Estimate/sf_estm$Estimate.sd
-  sf_estm$jack_pv  <- round(2 * (1 - pt(abs(sf_estm$jack_zv), df=sf_estm$Estimate.length)),5)
+    sf_estm[sf_estm$draw %in% 0, c("Survey", "CoefName", "Tech", "sample", "restrict", "Estimate", "StdError", "Zvalue", "Pvalue")],
+    doBy::summaryBy(list(c("Estimate"), c("Survey", "CoefName", "Tech", "sample", "restrict")),
+                    data=sf_estm[!sf_estm$draw %in% 0,], FUN=c(mean, sd, length)),
+    by=c("Survey", "CoefName", "Tech", "sample", "restrict"))
+  sf_estm$jack_zv <- sf_estm$Estimate / sf_estm$Estimate.sd
+  sf_estm$jack_pv <- round(2 * (1 - pt(abs(sf_estm$jack_zv), df=sf_estm$Estimate.length)), 5)
+  
   #---------------------------------------------------
   # Summary Scores                                 ####
-  ef_mean <- as.data.frame(data.table::rbindlist(lapply(1:length(res),function(draw){return(res[[draw]]$ef_mean)}), fill = TRUE))
-  ef_mean <- ef_mean[!ef_mean$Estimate %in% c(NA,Inf,-Inf,NaN),]
-
-  ef_mean <- doBy::summaryBy(list(c("Estimate"),c("sample","Tech","type","estType","Survey","stat","CoefName","restrict","draw")),
-                  data=ef_mean,FUN=mean,keep.names = T)
+  # Combine results from all draws for summary scores
+  ef_mean <- as.data.frame(data.table::rbindlist(lapply(1:length(res), function(draw) { return(res[[draw]]$ef_mean) }), fill = TRUE))
+  ef_mean <- ef_mean[!ef_mean$Estimate %in% c(NA, Inf, -Inf, NaN),]
+  
+  ef_mean <- doBy::summaryBy(list(c("Estimate"), c("sample", "Tech", "type", "estType", "Survey", "stat", "CoefName", "restrict", "draw")),
+                             data=ef_mean, FUN=mean, keep.names = T)
   
   ef_mean <- dplyr::inner_join(
-    ef_mean[ef_mean$draw %in% 0,c("sample","Tech","type","estType","Survey","stat","CoefName","restrict","Estimate")],
-    doBy::summaryBy(list(c("Estimate"),c("sample","Tech","type","estType","Survey","stat","CoefName","restrict")),
-                    data=ef_mean[!ef_mean$draw %in% 0,],FUN=c(mean,sd,length)),
-    by=c("sample","Tech","type","estType","Survey","stat","CoefName","restrict"))
+    ef_mean[ef_mean$draw %in% 0, c("sample", "Tech", "type", "estType", "Survey", "stat", "CoefName", "restrict", "Estimate")],
+    doBy::summaryBy(list(c("Estimate"), c("sample", "Tech", "type", "estType", "Survey", "stat", "CoefName", "restrict")),
+                    data=ef_mean[!ef_mean$draw %in% 0,], FUN=c(mean, sd, length)),
+    by=c("sample", "Tech", "type", "estType", "Survey", "stat", "CoefName", "restrict"))
   
-  function(){
-    
-    check <- ef_mean[(ef_mean$draw %in% 0 & ef_mean$Survey %in% "GLSS0"),]
-    check <- check[check$stat %in% "wmean",]
-    check <- check[check$estType %in% c("teBC"),]
-    check <- check[check$CoefName %in% "efficiencyGap_pct",]
-    check <- check[check$restrict %in% "Restricted",]
-
-  }
-  
-  ef_mean$jack_zv  <- ef_mean$Estimate/ef_mean$Estimate.sd
-  ef_mean$jack_pv  <- round(2 * (1 - pt(abs(ef_mean$jack_zv), df=ef_mean$Estimate.length)),5)
+  ef_mean$jack_zv <- ef_mean$Estimate / ef_mean$Estimate.sd
+  ef_mean$jack_pv <- round(2 * (1 - pt(abs(ef_mean$jack_zv), df=ef_mean$Estimate.length)), 5)
   
   #---------------------------------------------------
   # Summary Elasticity                             ####
-  el_mean <- as.data.frame(data.table::rbindlist(lapply(1:length(res),function(draw){return(res[[draw]]$el_mean)}), fill = TRUE))
-  table(el_mean$sample,el_mean$input)
-  el_mean <- el_mean[!el_mean$Estimate %in% c(NA,Inf,-Inf,NaN),]
+  # Combine results from all draws for summary elasticity
+  el_mean <- as.data.frame(data.table::rbindlist(lapply(1:length(res), function(draw) { return(res[[draw]]$el_mean) }), fill = TRUE))
+  el_mean <- el_mean[!el_mean$Estimate %in% c(NA, Inf, -Inf, NaN),]
   
-  el_mean <- doBy::summaryBy(list(c("Estimate"),c("Survey","sample","Tech","input","Survey","stat","CoefName","restrict","draw")),
-                             data=el_mean,FUN=mean,keep.names = T)
-  
-  function(){
-    
-    check <- el_mean[(el_mean$draw %in% 0 & el_mean$Survey %in% "GLSS0"),]
-    check <- check[check$stat %in% "wmean",]
-    check <- check[check$input %in% "el1",]
-    check <- check[check$CoefName %in% "elasticityGap_pct",]
-    check <- check[check$restrict %in% "Restricted",]
-    check
-  }
+  el_mean <- doBy::summaryBy(list(c("Estimate"), c("Survey", "sample", "Tech", "input", "Survey", "stat", "CoefName", "restrict", "draw")),
+                             data=el_mean, FUN=mean, keep.names = T)
   
   el_mean <- dplyr::inner_join(
-    el_mean[el_mean$draw %in% 0,c("sample","Tech","input","Survey","stat","CoefName","restrict","Estimate")],
-    doBy::summaryBy(list(c("Estimate"),c("sample","Tech","input","Survey","stat","CoefName","restrict")),
-                    data=el_mean[!el_mean$draw %in% 0,],FUN=c(mean,sd,length)),
-    by=c("sample","Tech","input","Survey","stat","CoefName","restrict"))
+    el_mean[el_mean$draw %in% 0, c("sample", "Tech", "input", "Survey", "stat", "CoefName", "restrict", "Estimate")],
+    doBy::summaryBy(list(c("Estimate"), c("sample", "Tech", "input", "Survey", "stat", "CoefName", "restrict")),
+                    data=el_mean[!el_mean$draw %in% 0,], FUN=c(mean, sd, length)),
+    by=c("sample", "Tech", "input", "Survey", "stat", "CoefName", "restrict"))
   
-  el_mean$jack_zv  <- el_mean$Estimate/el_mean$Estimate.sd
-  el_mean$jack_pv  <- round(2 * (1 - pt(abs(el_mean$jack_zv), df=el_mean$Estimate.length)),5)
+  el_mean$jack_zv <- el_mean$Estimate / el_mean$Estimate.sd
+  el_mean$jack_pv <- round(2 * (1 - pt(abs(el_mean$jack_zv), df=el_mean$Estimate.length)), 5)
   
   #---------------------------------------------------
   # Distribution bars- Scores                      ####
-  ef_dist <- as.data.frame(data.table::rbindlist(lapply(1:length(res),function(draw){return(res[[draw]]$ef_dist)}), fill = TRUE)) %>% 
-    tidyr::gather(stat, Estimate, c("est_count","est_weight")) 
+  # Combine results from all draws for distribution bars of scores
+  ef_dist <- as.data.frame(data.table::rbindlist(lapply(1:length(res), function(draw) { return(res[[draw]]$ef_dist) }), fill = TRUE)) %>% 
+    tidyr::gather(stat, Estimate, c("est_count", "est_weight")) 
   
-  ef_dist <- ef_dist[!ef_dist$Estimate %in% c(NA,Inf,-Inf,NaN),]
-
-  ef_dist <- doBy::summaryBy(list(c("Estimate"),c("Survey","sample","Tech","type","estType","range","Frqlevel","stat","restrict","draw")),
-                             data=ef_dist,FUN=mean,keep.names = T)
+  ef_dist <- ef_dist[!ef_dist$Estimate %in% c(NA, Inf, -Inf, NaN),]
+  
+  ef_dist <- doBy::summaryBy(list(c("Estimate"), c("Survey", "sample", "Tech", "type", "estType", "range", "Frqlevel", "stat", "restrict", "draw")),
+                             data=ef_dist, FUN=mean, keep.names = T)
   
   ef_dist <- dplyr::inner_join(
-    ef_dist[ef_dist$draw %in% 0,c("Survey","sample","Tech","type","estType","range","Frqlevel","stat","restrict","Estimate")],
-    doBy::summaryBy(list(c("Estimate"),c("Surveyy","Survey","sample","Tech","type","estType","range","Frqlevel","stat","restrict")),
-                    data=ef_dist[!ef_dist$draw %in% 0,],FUN=c(mean,sd,length)),
-    by=c("Survey","sample","Tech","type","estType","range","Frqlevel","stat","restrict"))
+    ef_dist[ef_dist$draw %in% 0, c("Survey", "sample", "Tech", "type", "estType", "range", "Frqlevel", "stat", "restrict", "Estimate")],
+    doBy::summaryBy(list(c("Estimate"), c("Surveyy", "Survey", "sample", "Tech", "type", "estType", "range", "Frqlevel", "stat", "restrict")),
+                    data=ef_dist[!ef_dist$draw %in% 0,], FUN=c(mean, sd, length)),
+    by=c("Survey", "sample", "Tech", "type", "estType", "range", "Frqlevel", "stat", "restrict"))
   
-  ef_dist$jack_zv  <- ef_dist$Estimate/ef_dist$Estimate.sd
-  ef_dist$jack_pv  <- round(2 * (1 - pt(abs(ef_dist$jack_zv), df=ef_dist$Estimate.length)),5)
-  ef_dist$stat <- gsub("est_","",ef_dist$stat)
+  ef_dist$jack_zv <- ef_dist$Estimate / ef_dist$Estimate.sd
+  ef_dist$jack_pv <- round(2 * (1 - pt(abs(ef_dist$jack_zv), df=ef_dist$Estimate.length)), 5)
+  ef_dist$stat <- gsub("est_", "", ef_dist$stat)
   
   #---------------------------------------------------
   # Disaggregated score summary                    ####
   disagscors <- NULL
-  if(!is.null(res[[1]]$disagscors)){
-  disagscors <- as.data.frame(data.table::rbindlist(lapply(1:length(res),function(draw){return(res[[draw]]$disagscors)}), fill = TRUE)) %>% 
-    tidyr::gather(stat, Estimate, c("wmean","mean","median","mode")) 
-  disagscors <- disagscors[!disagscors$Estimate %in% c(NA,Inf,-Inf,NaN),]
-
-  disagscors <- doBy::summaryBy(list(c("Estimate"),c("sample","estType","Tech","input","Survey","disagscors_level","disagscors_var","CoefName","stat","restrict","draw")),
-                             data=disagscors,FUN=mean,keep.names = T)
-  
-  disagscorsGAP <- disagscors[disagscors$Tech %in% TechKey$Tech,]
-  disagscorsGAP <- dplyr::inner_join(
-    disagscorsGAP[!disagscorsGAP$Tech %in% min(TechKey$Tech),c("sample","estType","Survey","CoefName","input","stat","restrict","disagscors_level","disagscors_var","Tech","draw","Estimate")],
-    doBy::summaryBy(list("Estimate",c("sample","estType","Survey","CoefName","input","stat","restrict","disagscors_level","disagscors_var","draw")),
-                    data=disagscorsGAP[disagscorsGAP$Tech %in% min(TechKey$Tech),],FUN=c(mean),na.rm=T),
-    by=c("sample","estType","Survey","CoefName","input","stat","restrict","disagscors_level","disagscors_var","draw"))
-  
-  disagscorsGAP$disag_efficiencyGap_lvl <- disagscorsGAP$Estimate - disagscorsGAP$Estimate.mean
-  disagscorsGAP$disag_efficiencyGap_pct <- ((disagscorsGAP$disag_efficiencyGap_lvl/abs(disagscorsGAP$Estimate.mean)))*100
-  disagscorsGAP <- disagscorsGAP[c("sample","estType","Survey","CoefName","input","stat","restrict","disagscors_level","disagscors_var","Tech","draw",
-                                   "disag_efficiencyGap_lvl","disag_efficiencyGap_pct")]
-  disagscorsGAP <- disagscorsGAP %>%  tidyr::gather(CoefName, Estimate, c("disag_efficiencyGap_lvl","disag_efficiencyGap_pct"))
-  disagscors <- as.data.frame(data.table::rbindlist(list(disagscors,disagscorsGAP), fill = TRUE))
-  
-  disagscors <- dplyr::inner_join(
-    disagscors[disagscors$draw %in% 0,c("sample","estType","Tech","input","Survey","disagscors_level","disagscors_var","CoefName","stat","restrict","Estimate")],
-    doBy::summaryBy(list(c("Estimate"),c("sample","estType","Tech","input","Survey","disagscors_level","disagscors_var","CoefName","stat","restrict")),
-                    data=disagscors[!disagscors$draw %in% 0,],FUN=c(mean,sd,length)),
-    by=c("sample","estType","Tech","input","Survey","disagscors_level","disagscors_var","CoefName","stat","restrict"))
-  
-  disagscors$jack_zv  <- disagscors$Estimate/disagscors$Estimate.sd
-  disagscors$jack_pv  <- round(2 * (1 - pt(abs(disagscors$jack_zv), df=disagscors$Estimate.length)),5)
+  if(!is.null(res[[1]]$disagscors)) {
+    disagscors <- as.data.frame(data.table::rbindlist(lapply(1:length(res), function(draw) { return(res[[draw]]$disagscors) }), fill = TRUE)) %>% 
+      tidyr::gather(stat, Estimate, c("wmean", "mean", "median", "mode")) 
+    disagscors <- disagscors[!disagscors$Estimate %in% c(NA, Inf, -Inf, NaN),]
+    
+    disagscors <- doBy::summaryBy(list(c("Estimate"), c("sample", "estType", "Tech", "input", "Survey", "disagscors_level", "disagscors_var", "CoefName", "stat", "restrict", "draw")),
+                                  data=disagscors, FUN=mean, keep.names = T)
+    
+    # Calculate disaggregated efficiency gaps
+    disagscorsGAP <- disagscors[disagscors$Tech %in% TechKey$Tech,]
+    disagscorsGAP <- dplyr::inner_join(
+      disagscorsGAP[!disagscorsGAP$Tech %in% min(TechKey$Tech), c("sample", "estType", "Survey", "CoefName", "input", "stat", "restrict", "disagscors_level", "disagscors_var", "Tech", "draw", "Estimate")],
+      doBy::summaryBy(list("Estimate", c("sample", "estType", "Survey", "CoefName", "input", "stat", "restrict", "disagscors_level", "disagscors_var", "draw")),
+                      data=disagscorsGAP[disagscorsGAP$Tech %in% min(TechKey$Tech),], FUN=c(mean), na.rm=T),
+      by=c("sample", "estType", "Survey", "CoefName", "input", "stat", "restrict", "disagscors_level", "disagscors_var", "draw"))
+    
+    disagscorsGAP$disag_efficiencyGap_lvl <- disagscorsGAP$Estimate - disagscorsGAP$Estimate.mean
+    disagscorsGAP$disag_efficiencyGap_pct <- ((disagscorsGAP$disag_efficiencyGap_lvl / abs(disagscorsGAP$Estimate.mean)))*100
+    disagscorsGAP <- disagscorsGAP[c("sample", "estType", "Survey", "CoefName", "input", "stat", "restrict", "disagscors_level", "disagscors_var", "Tech", "draw",
+                                     "disag_efficiencyGap_lvl", "disag_efficiencyGap_pct")]
+    disagscorsGAP <- disagscorsGAP %>% tidyr::gather(CoefName, Estimate, c("disag_efficiencyGap_lvl", "disag_efficiencyGap_pct"))
+    disagscors <- as.data.frame(data.table::rbindlist(list(disagscors, disagscorsGAP), fill = TRUE))
+    
+    disagscors <- dplyr::inner_join(
+      disagscors[disagscors$draw %in% 0, c("sample", "estType", "Tech", "input", "Survey", "disagscors_level", "disagscors_var", "CoefName", "stat", "restrict", "Estimate")],
+      doBy::summaryBy(list(c("Estimate"), c("sample", "estType", "Tech", "input", "Survey", "disagscors_level", "disagscors_var", "CoefName", "stat", "restrict")),
+                      data=disagscors[!disagscors$draw %in% 0,], FUN=c(mean, sd, length)),
+      by=c("sample", "estType", "Tech", "input", "Survey", "disagscors_level", "disagscors_var", "CoefName", "stat", "restrict"))
+    
+    disagscors$jack_zv <- disagscors$Estimate / disagscors$Estimate.sd
+    disagscors$jack_pv <- round(2 * (1 - pt(abs(disagscors$jack_zv), df=disagscors$Estimate.length)), 5)
   }
+  
   #---------------------------------------------------
   # Summary- Risk                                  ####
   rk_mean <- NULL
-  if(!is.null(res[[1]]$rk_mean) & ! nrow(res[[1]]$rk_mean) %in% 0){
-    rk_mean <- as.data.frame(data.table::rbindlist(lapply(1:length(res),function(draw){return(res[[draw]]$rk_mean)}), fill = TRUE)) 
-    rk_mean <- rk_mean[!rk_mean$Estimate %in% c(NA,Inf,-Inf,NaN),]
-
-    rk_mean <- doBy::summaryBy(list(c("Estimate"),c("sample","Tech","Survey","stat","CoefName","restrict","draw")),
-                                  data=rk_mean,FUN=mean,keep.names = T)
+  if(!is.null(res[[1]]$rk_mean) & !nrow(res[[1]]$rk_mean) %in% 0) {
+    rk_mean <- as.data.frame(data.table::rbindlist(lapply(1:length(res), function(draw) { return(res[[draw]]$rk_mean) }), fill = TRUE)) 
+    rk_mean <- rk_mean[!rk_mean$Estimate %in% c(NA, Inf, -Inf, NaN),]
+    
+    rk_mean <- doBy::summaryBy(list(c("Estimate"), c("sample", "Tech", "Survey", "stat", "CoefName", "restrict", "draw")),
+                               data=rk_mean, FUN=mean, keep.names = T)
     
     rk_mean <- dplyr::inner_join(
-      rk_mean[rk_mean$draw %in% 0,c("sample","Tech","Survey","stat","CoefName","restrict","Estimate")],
-      doBy::summaryBy(list(c("Estimate"),c("sample","Tech","Survey","stat","CoefName","restrict")),
-                      data=rk_mean[!rk_mean$draw %in% 0,],FUN=c(mean,sd,length)),
-      by=c("sample","Tech","Survey","stat","CoefName","restrict"))
-    rk_mean$jack_zv  <- rk_mean$Estimate/rk_mean$Estimate.sd
-    rk_mean$jack_pv  <- round(2 * (1 - pt(abs(rk_mean$jack_zv), df=rk_mean$Estimate.length)),5)
+      rk_mean[rk_mean$draw %in% 0, c("sample", "Tech", "Survey", "stat", "CoefName", "restrict", "Estimate")],
+      doBy::summaryBy(list(c("Estimate"), c("sample", "Tech", "Survey", "stat", "CoefName", "restrict")),
+                      data=rk_mean[!rk_mean$draw %in% 0,], FUN=c(mean, sd, length)),
+      by=c("sample", "Tech", "Survey", "stat", "CoefName", "restrict"))
+    rk_mean$jack_zv <- rk_mean$Estimate / rk_mean$Estimate.sd
+    rk_mean$jack_pv <- round(2 * (1 - pt(abs(rk_mean$jack_zv), df=rk_mean$Estimate.length)), 5)
     rk_mean$type <- "risk"
   }
+  
   #---------------------------------------------------
   # Distribution bars- Risk                        ####
   rk_dist <- NULL
-  if(!is.null(res[[1]]$rk_dist) & ! nrow(res[[1]]$rk_dist) %in% 0){
-    rk_dist <- as.data.frame(data.table::rbindlist(lapply(1:length(res),function(draw){return(res[[draw]]$rk_dist)}), fill = TRUE)) %>% 
-      tidyr::gather(stat, Estimate, c("est_count","est_weight")) 
-    rk_dist <- rk_dist[!rk_dist$Estimate %in% c(NA,Inf,-Inf,NaN),]
-
-    rk_dist <- doBy::summaryBy(list(c("Estimate"),c("Survey","sample","Tech","range","Frqlevel","stat","restrict","draw")),
-                               data=rk_dist,FUN=mean,keep.names = T)
+  if(!is.null(res[[1]]$rk_dist) & !nrow(res[[1]]$rk_dist) %in% 0) {
+    rk_dist <- as.data.frame(data.table::rbindlist(lapply(1:length(res), function(draw) { return(res[[draw]]$rk_dist) }), fill = TRUE)) %>% 
+      tidyr::gather(stat, Estimate, c("est_count", "est_weight")) 
+    rk_dist <- rk_dist[!rk_dist$Estimate %in% c(NA, Inf, -Inf, NaN),]
+    
+    rk_dist <- doBy::summaryBy(list(c("Estimate"), c("Survey", "sample", "Tech", "range", "Frqlevel", "stat", "restrict", "draw")),
+                               data=rk_dist, FUN=mean, keep.names = T)
     
     rk_dist <- dplyr::inner_join(
-      rk_dist[rk_dist$draw %in% 0,c("Survey","sample","Tech","range","Frqlevel","stat","restrict","Estimate")],
-      doBy::summaryBy(list(c("Estimate"),c("Survey","sample","Tech","range","Frqlevel","stat","restrict")),
-                      data=rk_dist[!rk_dist$draw %in% 0,],FUN=c(mean,sd,length)),
-      by=c("Survey","sample","Tech","range","Frqlevel","stat","restrict"))
+      rk_dist[rk_dist$draw %in% 0, c("Survey", "sample", "Tech", "range", "Frqlevel", "stat", "restrict", "Estimate")],
+      doBy::summaryBy(list(c("Estimate"), c("Survey", "sample", "Tech", "range", "Frqlevel", "stat", "restrict")),
+                      data=rk_dist[!rk_dist$draw %in% 0,], FUN=c(mean, sd, length)),
+      by=c("Survey", "sample", "Tech", "range", "Frqlevel", "stat", "restrict"))
     
-    rk_dist$jack_zv  <- rk_dist$Estimate/rk_dist$Estimate.sd
-    rk_dist$jack_pv  <- round(2 * (1 - pt(abs(rk_dist$jack_zv), df=rk_dist$Estimate.length)),5)
-    rk_dist$stat <- gsub("est_","",rk_dist$stat)
+    rk_dist$jack_zv <- rk_dist$Estimate / rk_dist$Estimate.sd
+    rk_dist$jack_pv <- round(2 * (1 - pt(abs(rk_dist$jack_zv), df=rk_dist$Estimate.length)), 5)
+    rk_dist$stat <- gsub("est_", "", rk_dist$stat)
     rk_dist$type <- "risk"
   }
+  
   #---------------------------------------------------
   # Summary and export                             ####
+  res <- list(sf_estm=sf_estm, el_mean=el_mean, ef_mean=ef_mean,
+              rk_mean=rk_mean, ef_dist=ef_dist, rk_dist=rk_dist, disagscors=disagscors,
+              el_samp=res[[1]]$el_samp, ef_samp=res[[1]]$ef_samp, rk_samp=res[[1]]$rk_samp)
   
-  res <- list(sf_estm = sf_estm,el_mean = el_mean,ef_mean = ef_mean,
-              rk_mean = rk_mean,ef_dist = ef_dist,rk_dist = rk_dist, disagscors=disagscors,
-              el_samp=res[[1]]$el_samp,ef_samp=res[[1]]$ef_samp,rk_samp=res[[1]]$rk_samp)
-
   return(res)
   #---------------------------------------------------
 }
 #---------------------------------------------
-# TE estimations                           ####
+# Treatment effect (TE) calculation        ####
+# This function performs treatment effect (TE) calculations.
+# Parameters:
+# - i: Index of the current specification in the matching specifications list.
 
 Fxn_te_cals <- function(i){
   tryCatch({
-    md <- readRDS(paste0("results/matching/Match",stringr::str_pad(m.specs$ARRAY[i],4,pad="0"),".rds"))$md[c("UID","weights")]
-    md <- dplyr::inner_join(DATA,md,by="UID")
+    # Load the matching data for the current specification
+    md <- readRDS(paste0("results/matching/Match", stringr::str_pad(m.specs$ARRAY[i], 4, pad="0"), ".rds"))$md[c("UID", "weights")]
+    md <- dplyr::inner_join(DATA, md, by="UID")
     
-    md$HrvstKg <- md$HrvstKg/md$Area
-    md$SeedKg <- md$SeedKg/md$Area
-    md$HHLaborAE <- md$HHLaborAE/md$Area
-    md$HirdHr <- md$HirdHr/md$Area
-    md$FertKg <- md$FertKg/md$Area
-    md$PestLt <- md$PestLt/md$Area
+    # Normalize variables by area
+    md$HrvstKg <- md$HrvstKg / md$Area
+    md$SeedKg <- md$SeedKg / md$Area
+    md$HHLaborAE <- md$HHLaborAE / md$Area
+    md$HirdHr <- md$HirdHr / md$Area
+    md$FertKg <- md$FertKg / md$Area
+    md$PestLt <- md$PestLt / md$Area
     
     treatment <- "Treat"
     
+    # Calculate ATET scalar for each outcome variable
     atet_scalar <- as.data.frame(
       data.table::rbindlist(
         lapply(
-          c("HrvstKg","Area", "SeedKg", "HHLaborAE","HirdHr","FertKg","PestLt"),
+          c("HrvstKg", "Area", "SeedKg", "HHLaborAE", "HirdHr", "FertKg", "PestLt"),
           function(outcome){
             tryCatch({
               # outcome <- "SeedKg"
-              Emch.formula  <- paste0(paste0("factor(",Emch,")"),collapse = "+")
-              Match.formula <- paste0("Treat~",paste0(c(Scle),collapse = "+"))
+              Emch.formula <- paste0(paste0("factor(", Emch, ")"), collapse = "+")
+              Match.formula <- paste0("Treat~", paste0(c(Scle), collapse = "+"))
               for(var in c(Fixd)){ 
-                Match.formula<-paste0(Match.formula,"+factor(",var,")")
+                Match.formula <- paste0(Match.formula, "+factor(", var, ")")
               }
               
-              data <- md[!(md[,treatment] %in% NA | md[,outcome] %in% NA | md[,"weights"] %in% NA),]
+              data <- md[!(md[, treatment] %in% NA | md[, outcome] %in% NA | md[,"weights"] %in% NA),]
+              data <- data[complete.cases(data[c(Emch, Scle, Fixd)]),]
               
-              data <- data[complete.cases(data[c(Emch,Scle,Fixd)]),]
+              Fit.formula <- as.formula(paste0("log(", outcome, "+", min(data[, outcome][data[, outcome] > 0], na.rm=T) * (1/100),
+                                               ")~", treatment, "*(", gsub("Treat~", "", Match.formula), "+", Emch.formula, ")"))
               
-              Fit.formula <- as.formula(paste0("log(",outcome,"+",min(data[,outcome][data[,outcome] > 0],na.rm=T)*(1/100),
-                                               ")~",treatment,"*(",gsub("Treat~","",Match.formula),"+",Emch.formula,")"))
+              fit_lm <- lm(as.formula(Fit.formula), weights = weights, data=data)
+              TREATED <- data[names(data)[!names(data) %in% treatment]]; TREATED[, treatment] <- 1
+              TREATED <- predict(fit_lm, TREATED)
               
-              fit_lm <- lm(as.formula(Fit.formula),weights = weights,data=data) # summary(fit_lm)
-              TREATED <- data[names(data)[!names(data) %in% treatment]];TREATED[,treatment] <- 1
-              TREATED <- predict(fit_lm,TREATED)
+              UNTREATED <- data[names(data)[!names(data) %in% treatment]]; UNTREATED[, treatment] <- 0
+              UNTREATED <- predict(fit_lm, UNTREATED)
               
-              UNTREATED <- data[names(data)[!names(data) %in% treatment]];UNTREATED[,treatment] <- 0
-              UNTREATED <- predict(fit_lm,UNTREATED)
-              
-              data$TE_OLS <- (exp(TREATED - UNTREATED)-1)*100
+              data$TE_OLS <- (exp(TREATED - UNTREATED) - 1) * 100
               data$outcome <- outcome
               
               TE <- data[!(data$TE_OLS <= -100 | data$TE_OLS >= 100),]
-               
+              
               setDT(TE) 
-              ATE  <- data.frame(TE[, .(est = weighted.mean(x=TE_OLS, w=weights,na.rm= TRUE)), by = .(outcome)])$est
-              ATET <- data.frame(TE[Treat %in% 1][, .(est = weighted.mean(x=TE_OLS, w=weights,na.rm= TRUE)), by = .(outcome)])$est
-              ATEU <- data.frame(TE[Treat %in% 0][, .(est = weighted.mean(x=TE_OLS, w=weights,na.rm= TRUE)), by = .(outcome)])$est
+              ATE <- data.frame(TE[, .(est = weighted.mean(x=TE_OLS, w=weights, na.rm= TRUE)), by = .(outcome)])$est
+              ATET <- data.frame(TE[Treat %in% 1][, .(est = weighted.mean(x=TE_OLS, w=weights, na.rm= TRUE)), by = .(outcome)])$est
+              ATEU <- data.frame(TE[Treat %in% 0][, .(est = weighted.mean(x=TE_OLS, w=weights, na.rm= TRUE)), by = .(outcome)])$est
               
               aic <- as.numeric(AIC(fit_lm))
-              ll  <- as.numeric(logLik(fit_lm))
-              R2  <- summary(fit_lm)$r.squared
+              ll <- as.numeric(logLik(fit_lm))
+              R2 <- summary(fit_lm)$r.squared
               R2a <- summary(fit_lm)$adj.r.squared
-              Ft  <- summary(fit_lm)$fstatistic[1]
-              N   <- nrow(fit_lm$model)
+              Ft <- summary(fit_lm)$fstatistic[1]
+              N <- nrow(fit_lm$model)
               
-              fit_lm_res <- data.frame(outcome = outcome,treatment=treatment,
-                                       level = c("ATE","ATET","ATEU","aic","ll","R2","N","Ft","R2a"),est=c(ATE,ATET,ATEU,aic,ll,R2,N,Ft,R2a))
+              fit_lm_res <- data.frame(outcome = outcome, treatment=treatment,
+                                       level = c("ATE", "ATET", "ATEU", "aic", "ll", "R2", "N", "Ft", "R2a"), est=c(ATE, ATET, ATEU, aic, ll, R2, N, Ft, R2a))
               
               return(fit_lm_res)
-            }, error = function(e){return(NULL)})
+            }, error = function(e){ return(NULL) })
           }), fill = TRUE)) 
     
-    atet_scalar <- data.frame(m.specs[i,],atet_scalar)
-
-    saveRDS(atet_scalar,file=paste0("results/te/te",stringr::str_pad(m.specs$ARRAY[i],4,pad="0"),".rds"))
+    atet_scalar <- data.frame(m.specs[i,], atet_scalar)
+    
+    saveRDS(atet_scalar, file=paste0("results/te/te", stringr::str_pad(m.specs$ARRAY[i], 4, pad="0"), ".rds"))
     return(i)
-  }, error = function(e){return(NULL)})
+  }, error = function(e){ return(NULL) })
 }
 
+#---------------------------------------------
+# Treatment effect (TE) summary            ####
+# This function summarizes treatment effect (TE) calculations from multiple files.
 
 Fxn_te_summary <- function(){
-estim <- as.data.frame(
-  data.table::rbindlist(
-    lapply(
-      list.files(paste0("results/te/"),full.names = T),
-      function(file){
-        # i <- 1
-        DONE <- NULL
-        tryCatch({
-          DONE <- readRDS(file)
-        }, error=function(e){})
-        return(DONE)
-      }), fill = TRUE))
-
-estim <- estim[!estim$est %in% c(NA,NaN,Inf,-Inf),]
-
-estim <- dplyr::full_join(estim[estim$boot %in% 0, c("method","distance","link","outcome","level","est")],
-                          doBy::summaryBy(list("est",c("method","distance","link","outcome","level")),
-                                          data=estim,FUN=c(length,mean,sd)),
-                          by=c("method","distance","link","outcome","level"))
-
-names(estim)[names(estim) %in% "est.mean"]   <- "jack_mean"
-names(estim)[names(estim) %in% "est.sd"]     <- "jack_se"
-names(estim)[names(estim) %in% "est.length"] <- "jack_n"
-estim$jack_tvl <- estim$jack_mean/estim$jack_se
-estim$jack_pvl <- 2 * (1 - pt(abs(estim$jack_tvl), estim$jack_n-2))
-
-saveRDS(estim,file=paste0("results/te_summary.rds"))
-return("")
+  estim <- as.data.frame(
+    data.table::rbindlist(
+      lapply(
+        list.files(paste0("results/te/"), full.names = T),
+        function(file){
+          DONE <- NULL
+          tryCatch({
+            DONE <- readRDS(file)
+          }, error=function(e){})
+          return(DONE)
+        }), fill = TRUE))
+  
+  estim <- estim[!estim$est %in% c(NA, NaN, Inf, -Inf),]
+  
+  estim <- dplyr::full_join(estim[estim$boot %in% 0, c("method", "distance", "link", "outcome", "level", "est")],
+                            doBy::summaryBy(list("est", c("method", "distance", "link", "outcome", "level")),
+                                            data=estim, FUN=c(length, mean, sd)),
+                            by=c("method", "distance", "link", "outcome", "level"))
+  
+  names(estim)[names(estim) %in% "est.mean"] <- "jack_mean"
+  names(estim)[names(estim) %in% "est.sd"] <- "jack_se"
+  names(estim)[names(estim) %in% "est.length"] <- "jack_n"
+  estim$jack_tvl <- estim$jack_mean / estim$jack_se
+  estim$jack_pvl <- 2 * (1 - pt(abs(estim$jack_tvl), estim$jack_n - 2))
+  
+  saveRDS(estim, file=paste0("results/te_summary.rds"))
+  return("")
 }
-
 #---------------------------------------------
