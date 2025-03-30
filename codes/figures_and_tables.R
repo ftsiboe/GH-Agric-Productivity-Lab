@@ -209,11 +209,11 @@ ers_theme = function() {
 }
 #-----------------------------------------
 # Main Specification                   ####
-tab_main_specification <- function(){
+tab_main_specification <- function(res_list=list.files("results/estimations/",pattern = "_optimal.rds",full.names = T)){
   res <- as.data.frame(
     data.table::rbindlist(
       lapply(
-        list.files("results/estimations/",pattern = "_optimal.rds",full.names = T),
+        res_list,
         function(file) {
           DONE <- NULL
           tryCatch({

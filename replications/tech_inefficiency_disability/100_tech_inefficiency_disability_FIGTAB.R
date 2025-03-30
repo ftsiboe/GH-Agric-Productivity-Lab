@@ -25,23 +25,19 @@ fig[["genderAge"]] <- fig[["genderAge"]] + theme(axis.text.x = element_text(size
 ggsave("results/figures/heterogeneity_crop_region.png", fig[["crop_region"]],dpi = 600,width = 8, height = 5)
 ggsave("results/figures/heterogeneity_genderAge.png", fig[["genderAge"]],dpi = 600,width = 8, height = 5)
 
-
 # Fig - Robustness              
 rm(list= ls()[!(ls() %in% c(Keep.List))])
 fig_robustness(y_title="\nDifference (%) [Disabled less non-Disabled]",
                res_list = c("results/estimations/CropID_Pooled_disabled_CD_hnormal_optimal.rds",
                             list.files("results/estimations/",pattern = "CropID_Pooled_disabled_TL_",full.names = T)))
 
-
 # Fig - Matching TE      
 rm(list= ls()[!(ls() %in% c(Keep.List))])
 fig_input_te(y_title="\nEducation gap (%)",tech_lable=c("Full sample", "Disabled sample", "non-Disabled sample"))
 
-
 # Fig - Covariate balance 
 rm(list= ls()[!(ls() %in% c(Keep.List))])
 fig_covariate_balance()
-
 
 # Fig - Distribution 
 dataFrq <- readRDS("results/estimations/CropID_Pooled_disabled_TL_hnormal_fullset.rds")
@@ -52,7 +48,6 @@ dataFrq <- dataFrq[dataFrq$stat %in% "weight",]
 dataFrq <- dataFrq[dataFrq$restrict %in% "Restricted",]
 dataFrq$Tech <- factor(as.numeric(as.character(dataFrq$TCHLvel)),levels = 0:1,labels = c("non-Disabled","Disabled"))
 fig_dsistribution(dataFrq)
-
 
 
 rm(list= ls()[!(ls() %in% c(Keep.List))])
