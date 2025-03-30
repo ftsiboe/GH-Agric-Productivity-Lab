@@ -8,7 +8,7 @@ See the [LICENSE](../LICENSE) file in the repository's root for details.
 
 This directory contains the replication code and related files for the agricultural productivity project in Ghana. The objective is to provide a transparent and reproducible analysis framework that validates and extends the findings presented in published research.
 
-Note that the [legacy studies[(https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/legacy_studies) were conducted before the project fully transitioned to GitHub. As such, their content is not based on the current resources available in this repository. Nonetheless, legacy files are provided in the individual study folders to replicate, as closely as possible, the initial studies.
+Note that the [legacy studies](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/legacy_studies) were conducted before the project fully transitioned to GitHub. As such, their content is not based on the current resources available in this repository. Nonetheless, legacy files are provided in the individual study folders to replicate, as closely as possible, the initial studies.
 
 ## Structure
 
