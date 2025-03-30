@@ -49,4 +49,6 @@ This project did not receive any external funding.
 If you find this repository useful, please star this project and cite our papers listed above.
 
 ## License
-This work is open access and free for use in replication or related research, with proper attribution to the authors and original studies.
+See the [LICENSE](../LICENSE) file in the repository's root for details.
+
+*Maintained by [ftsiboe](https://github.com/ftsiboe)*
