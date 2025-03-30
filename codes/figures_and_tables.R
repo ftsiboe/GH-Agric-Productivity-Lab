@@ -1,15 +1,9 @@
 #-----------------------------------------
 # Preliminaries                        ####
 library('magrittr');library(ggplot2);library(rasterVis);library(gridExtra)
-library(dplyr);library(gtable)
-
+library(dplyr);library(gtable);library(stringr);library(cowplot)
 #-----------------------------------------
-# ERS Theme                            ####
-#' ERS Theme
-#'
-#' @examples
-#' ggplot2::ggplot() + ERSTheme::ers_theme()
-#' @export
+# MAIN Theme                           ####
 
 ers_theme = function() {
   ggplot2::theme(

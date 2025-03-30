@@ -4,6 +4,9 @@ options(future.globals.maxSize = 8000 * 1024^2)
 library('magrittr');library(future.apply);library(dplyr);library(sfaR) ;library(micEcon);library(frontier)
 library(purrr);library(data.table);library(MatchIt);library(randomForest);library(CBPS);library(dbarts)
 library(optmatch);library(Matching);library(rgenoud);library(quadprog);library(car)
+
+# haven tidyr crayon cobalt stringr emdbook doBy corpcor Matrix MASS lavaan
+
 #---------------------------------------------
 # Minor                                    ####
 myseed <- 03242025
