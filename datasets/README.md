@@ -2,7 +2,11 @@
 
 ## Project Overview
 
-This project investigates the underlying factors behind crop production shortfalls in Ghana. Specifically, it explores whether these shortfalls are primarily due to farmer inefficiency, technology gaps, or a combination of both. By analyzing data from multiple cross-sectional, population-based surveys conducted between 1987 and 2017, the project estimates meta-stochastic-frontier (MSF) models to identify and quantify the sources of production inefficiencies. This empirical analysis not only validates the identified factors but also informs policy discussions aimed at increasing agricultural production in Ghana.
+For details about the project and its broader context, please refer to the main [GH-Agric-Productivity-Lab README](../README.md) in the repository's root.
+
+This directory contains the replication data files for the agricultural productivity project in Ghana. The objective is to provide a transparent and reproducible analysis framework that validates and extends the findings presented in published research.
+
+See the [LICENSE](../LICENSE) file in the repository's root for details.
 
 ## Available Datasets
 
@@ -79,3 +83,5 @@ save "merged_data.dta", replace
 
 
 ```
+
+*Maintained by [ftsiboe](https://github.com/ftsiboe)*
