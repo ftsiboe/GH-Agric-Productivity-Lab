@@ -4,7 +4,7 @@ For details about the project and its broader context, please refer to the main 
 
 See the [LICENSE](../LICENSE) file in the repository's root for details.
 
-**Status**: Currently under review but you can read the working paper here
+**Status**: Currently under review but you can read the working paper [here](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/blob/master/replications/tech_inefficiency_disability/DisabilityAgricProdGapGhana_public_version.pdf).
 
 
 ## Contributers
