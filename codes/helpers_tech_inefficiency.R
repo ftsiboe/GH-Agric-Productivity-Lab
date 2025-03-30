@@ -146,7 +146,7 @@ Fxn_SPECS <- function(TechVarlist, mainF=2, mainD=1) {
 # Parameters:
 # - drawN: The number of draws to perform.
 # - DATA: The dataset to be used.
-# - myseed: The seed for random number generation (default is 03242025).
+# - myseed: The seed for random number generation (default is 03242025). 
 
 Fxn_draw_spec <- function(drawN, DATA, myseed=03242025) {
   
