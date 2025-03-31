@@ -253,6 +253,7 @@ tab_main_specification <- function(res_list=list.files("results/estimations/",pa
             
             res <- rbind(ef_mean,el_mean,sf_estm)
             res <- res[c("TCH","FXN","DIS","estm_type","Survey","CoefName","sample","restrict","level_type","Tech","Estimate","Estimate.sd","jack_pv")]
+            saveRDS(res,file=paste0("results/figuresData/main_specification.rds"))
             return(res)
           }, error = function(e){return(NULL)})
         }), fill = TRUE))
@@ -261,16 +262,16 @@ tab_main_specification <- function(res_list=list.files("results/estimations/",pa
 #-----------------------------------------
 # Fig - Heterogeneity                  ####
 fig_heterogeneity00 <- function(res,y_title){
-  res$disasg <- as.character(res$disagscors_var)
-  res$level <- as.character(res$disagscors_level)
-  res <- res[res$estType %in% "teBC",]
-  res <- res[res$Survey %in% "GLSS0",]
-  res <- res[res$restrict %in% "Restricted",]
-  res <- res[res$stat %in% "mean",]
-  res <- res[!res$sample %in% "unmatched",]
-  res <- res[res$CoefName %in% "disag_efficiencyGap_pct",]
-  
-  res <- res[c("disasg","level","FXN","DIS","Survey","input","TCH","Tech","CoefName","Estimate","Estimate.sd","jack_pv")]
+  # res$disasg <- as.character(res$disagscors_var)
+  # res$level <- as.character(res$disagscors_level)
+  # res <- res[res$estType %in% "teBC",]
+  # res <- res[res$Survey %in% "GLSS0",]
+  # res <- res[res$restrict %in% "Restricted",]
+  # res <- res[res$stat %in% "mean",]
+  # res <- res[!res$sample %in% "unmatched",]
+  # res <- res[res$CoefName %in% "disag_efficiencyGap_pct",]
+  # 
+  # res <- res[c("disasg","level","FXN","DIS","Survey","input","TCH","Tech","CoefName","Estimate","Estimate.sd","jack_pv")]
   
   res$level <- ifelse(res$disasg %in% "AgeCat" & res$level == "1","Farmer aged\n35 or less",res$level)
   res$level <- ifelse(res$disasg %in% "AgeCat" & res$level == "2","Farmer aged\n36 to 59",res$level)
@@ -289,7 +290,7 @@ fig_heterogeneity00 <- function(res,y_title){
     # disasg <- c("AgeCat","Female");type<-"farmer"
     data   <- unique(rbind(res[(res$disasg %in% "CropID" & res$level %in% "Pooled"),],res[res$disasg %in% disasg,]))
     myrank <- data[data$input %in% "MTE",]
-    myrank <- myrank[myrank$Tech %in% min(data$Tech,na.rm=T),]
+    myrank <- myrank[as.integer(myrank$Tech) %in% min(as.integer(data$Tech),na.rm=T),]
     
     if("farmer" %in% type){
       myrank <- myrank[order(myrank$level),]
@@ -319,7 +320,13 @@ fig_heterogeneity00 <- function(res,y_title){
     
     data$input<- factor(data$x2,levels = 1:3,labels = c("Technology gap ratio","Technical efficiency","Meta-technical-efficiency"))
     
-    fig <- ggplot(data=data,aes(x = x,y=Estimate ,group=input,shape=input,colour=input,fill=input)) +
+    if(length(unique(as.character(data$Tech))) %in% 1){
+      fig <- ggplot(data=data,aes(x = x,y=Estimate ,group=input,shape=input,colour=input,fill=input))
+    }else{
+      fig <- ggplot(data=data,aes(x = x,y=Estimate ,group=Tech,shape=Tech,colour=input,fill=input)) 
+    }
+    
+    fig <- fig +
       geom_vline(xintercept=myrank_lines$x[1:(nrow(myrank_lines)-1)]+0.5, lwd=0.5, lty=5,color = "#808080") +
       geom_errorbar(aes(ymax = Estimate + Estimate.sd, ymin = Estimate - Estimate.sd), width = 0.25) +
       geom_point(size=1.5) + 
@@ -342,7 +349,10 @@ fig_heterogeneity00 <- function(res,y_title){
             strip.text = element_text(size = 10),
             strip.background = element_rect(fill = "white", colour = "black", size = 1))
     
-    write.csv(data[order(data$input),c("input","disasg","level","Estimate","Estimate.sd","jack_pv")],
+    saveRDS(data[order(data$input),c("Tech","input","disasg","level","Estimate","Estimate.sd","jack_pv")],
+              file=paste0("results/figuresData/",paste0(disasg,collapse = "_"),".rds"))
+    
+    write.csv(data[order(data$input),c("Tech","input","disasg","level","Estimate","Estimate.sd","jack_pv")],
               file=paste0("results/figuresData/",paste0(disasg,collapse = "_"),".csv"))
     return(fig)
   }
@@ -363,7 +373,6 @@ fig_heterogeneity00 <- function(res,y_title){
     greedy=F)
   fig_crop_region <- cowplot::plot_grid(fig_crop_region,legend,ncol=1,rel_heights=c(1,0.1))
   fig_crop_region <- cowplot::plot_grid(Ylab,fig_crop_region,nrow=1,rel_widths =c(0.002,0.03))
-  
   
   fig.Farmer <- eff_fig_fxn(disasg = c("AgeCat","Female","EduLevel"),
                               type="farmer",xsize=7) +
@@ -721,7 +730,7 @@ fig_covariate_balance <- function(){
 }
 #-----------------------------------------
 # Fig - Distribution                   ####
-fig_dsistribution <- function(dataFrq){
+fig_dsistribution <- function(dataFrq,colset=c("violet","purple")){
 
   dataFrq <- dataFrq[!dataFrq$Tech %in% NA,]
   dataFrq$input <- ifelse(dataFrq$type %in% "TE","(i) Technical efficiency",NA)
@@ -751,8 +760,8 @@ fig_dsistribution <- function(dataFrq){
     #geom_density(stat="identity",position="jitter",alpha=0.3)+
     #geom_errorbar(aes(x=Frqlevel,ymax = Estimate + Estimate.sd*1.96, ymin = Estimate - Estimate.sd*1.96), width = 0.25,colour="blue") +
     facet_grid(input ~ sample , scales = "free_y") +
-    scale_fill_manual(name="",values = c("violet","purple")) +
-    scale_color_manual(name="",values = c("violet","purple")) +
+    scale_fill_manual(name="",values = colset) +
+    scale_color_manual(name="",values = colset) +
     scale_shape_manual(name="",values = c(21,22,23,24,25,8,4)) +
     scale_x_continuous(breaks = xlabs$level,labels = xlabs$range) +
     labs(title= "", x = "", y = "", caption = "") +
