@@ -6,6 +6,7 @@ See the [LICENSE](../LICENSE) file in the repository's root for details.
 
 ## Contributers
 - [Francis Tsiboe](https://scholar.google.com/citations?user=ox2t_YIAAAAJ&hl=en)
+- [Jacob Asravor](https://scholar.google.com/citations?user=_zUi3FsAAAAJ&hl=en)
 
 Collaborations with enthusiastic and committed graduate students are welcomed. For more details see the wiki on [Graduate Student Opportunity to Lead Research on Agricultural Productivity in Ghana](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/wiki/Graduate-Student-Opportunity-to-Lead-Research-on-Agricultural-Productivity-in-Ghana)
   
