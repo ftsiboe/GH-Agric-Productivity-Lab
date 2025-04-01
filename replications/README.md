@@ -26,6 +26,8 @@ Each folder contains scripts, data, and results specific to the study indicated 
 
 Contributions are welcome. For suggestions, improvements, or to report any issues with the replication code, please open an issue or submit a pull request. Contributions help improve the reproducibility and robustness of the research.
 
+Collaborations with enthusiastic and committed graduate students are welcomed. For more details see the wiki on [Graduate Student Opportunity to Lead Research on Agricultural Productivity in Ghana](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/wiki/Graduate-Student-Opportunity-to-Lead-Research-on-Agricultural-Productivity-in-Ghana)
+
 ---
 
 *Maintained by [ftsiboe](https://github.com/ftsiboe)*
