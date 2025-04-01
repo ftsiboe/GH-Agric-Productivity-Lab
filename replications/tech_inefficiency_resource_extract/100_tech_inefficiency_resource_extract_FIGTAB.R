@@ -32,7 +32,7 @@ res <- res[c("disasg","level","FXN","DIS","Survey","input","TCH","Tech","CoefNam
 fig <- fig_heterogeneity00(res=res,y_title="Percentage Difference (Any extraction less No extraction)\n")
 fig[["genderAge"]] <- fig[["genderAge"]] + theme(axis.text.x = element_text(size = 5.5))
 ggsave("results/figures/heterogeneity_crop_region.png", fig[["crop_region"]],dpi = 600,width = 8, height = 5)
-ggsave("results/figures/heterogeneity_genderAge.png", fig[["genderAge"]],dpi = 600,width = 8, height = 5)
+ggsave("results/figures/heterogeneity_genderAge.png", fig[["genderAge"]],dpi = 600,width = 9, height = 5)
 
 # Fig - Robustness              
 rm(list= ls()[!(ls() %in% c(Keep.List))])
