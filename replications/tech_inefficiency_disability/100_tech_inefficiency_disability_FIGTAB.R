@@ -19,8 +19,18 @@ openxlsx::saveWorkbook(wb,"results/tech_inefficiency_disability_results.xlsx",ov
 
 # Fig - Heterogeneity          
 rm(list= ls()[!(ls() %in% c(Keep.List))])
-fig <- fig_heterogeneity00(res=readRDS("results/estimations/CropID_Pooled_disabled_TL_hnormal_optimal.rds")$disagscors,
-                    y_title="Percentage Difference (Disabled less non-Disabled)\n")
+res <- readRDS("results/estimations/CropID_Pooled_disabled_TL_hnormal_optimal.rds")$disagscors
+res$disasg <- as.character(res$disagscors_var)
+res$level <- as.character(res$disagscors_level)
+res <- res[res$estType %in% "teBC",]
+res <- res[res$Survey %in% "GLSS0",]
+res <- res[res$restrict %in% "Restricted",]
+res <- res[res$stat %in% "mean",]
+res <- res[!res$sample %in% "unmatched",]
+res <- res[res$CoefName %in% "disag_efficiencyGap_pct",]
+res <- res[c("disasg","level","FXN","DIS","Survey","input","TCH","Tech","CoefName","Estimate","Estimate.sd","jack_pv")]
+
+fig <- fig_heterogeneity00(res=res,y_title="Percentage Difference (Disabled less non-Disabled)\n")
 fig[["genderAge"]] <- fig[["genderAge"]] + theme(axis.text.x = element_text(size = 5.5))
 ggsave("results/figures/heterogeneity_crop_region.png", fig[["crop_region"]],dpi = 600,width = 8, height = 5)
 ggsave("results/figures/heterogeneity_genderAge.png", fig[["genderAge"]],dpi = 600,width = 8, height = 5)
@@ -70,13 +80,4 @@ paste0(paste0(reg$level," (",round(reg$Estimate,2),"%)"),collapse = ", ")
 CROP <- res[res$disagscors_var %in% "CROP",]
 CROP <- CROP[order(CROP$Estimate),]
 paste0(paste0(CROP$level," (",round(CROP$Estimate,2),"%)"),collapse = ", ")
-
-
-
-
-
-
-
-
-
 
