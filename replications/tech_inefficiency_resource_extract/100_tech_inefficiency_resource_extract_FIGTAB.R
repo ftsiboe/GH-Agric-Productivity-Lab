@@ -18,8 +18,18 @@ openxlsx::saveWorkbook(wb,"results/tech_inefficiency_resource_extract_results.xl
 
 # Fig - Heterogeneity          
 rm(list= ls()[!(ls() %in% c(Keep.List))])
-fig <- fig_heterogeneity00(res=readRDS("results/estimations/CropID_Pooled_extraction_any_TL_hnormal_optimal.rds")$disagscors,
-                    y_title="Percentage Difference (Any extraction less No extraction)\n")
+res <- readRDS("results/estimations/CropID_Pooled_extraction_any_TL_hnormal_optimal.rds")$disagscors
+res$disasg <- as.character(res$disagscors_var)
+res$level <- as.character(res$disagscors_level)
+res <- res[res$estType %in% "teBC",]
+res <- res[res$Survey %in% "GLSS0",]
+res <- res[res$restrict %in% "Restricted",]
+res <- res[res$stat %in% "mean",]
+res <- res[!res$sample %in% "unmatched",]
+res <- res[res$CoefName %in% "disag_efficiencyGap_pct",]
+res <- res[c("disasg","level","FXN","DIS","Survey","input","TCH","Tech","CoefName","Estimate","Estimate.sd","jack_pv")]
+
+fig <- fig_heterogeneity00(res=res,y_title="Percentage Difference (Any extraction less No extraction)\n")
 fig[["genderAge"]] <- fig[["genderAge"]] + theme(axis.text.x = element_text(size = 5.5))
 ggsave("results/figures/heterogeneity_crop_region.png", fig[["crop_region"]],dpi = 600,width = 8, height = 5)
 ggsave("results/figures/heterogeneity_genderAge.png", fig[["genderAge"]],dpi = 600,width = 8, height = 5)
@@ -34,11 +44,9 @@ fig_robustness(y_title="\nDifference (%) [Any extraction less No extraction]",
 rm(list= ls()[!(ls() %in% c(Keep.List))])
 fig_input_te(y_title="\nEducation gap (%)",tech_lable=c("Full\nsample", "Any extraction\nsample", "No extraction\nsample"))
 
-
 # Fig - Covariate balance 
 rm(list= ls()[!(ls() %in% c(Keep.List))])
 fig_covariate_balance()
-
 
 # Fig - Distribution 
 dataFrq <- readRDS("results/estimations/CropID_Pooled_extraction_any_TL_hnormal_fullset.rds")
