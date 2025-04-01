@@ -27,10 +27,10 @@ By clearly identifying the root causes of production shortfalls, this project co
 * [**Nationally Representative Farm/Household Level Dataset on Crop Production in Ghana from 1987-2017**](http://dx.doi.org/10.2139/ssrn.4134518 ) | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/blob/master/replications/legacy_studies/30%20Years%20of%20Crop%20Production%20in%20Ghana.zip)
 
 ## Work in Progress
-* Peace and Social Cohesion is Associated with Efficient Utilization of High Output Oriented Crop Production Technologies in Ghana | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_conflict)
-* Technology Gaps Drive Inequality in Production for Farmers with Disabilities | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_disability)
+* [Technology Gaps Drive Inequality in Production for Farmers with Disabilities](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/blob/master/replications/tech_inefficiency_disability/DisabilityAgricProdGapGhana_public_version.pdf) | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_disability)
 * The Education Disparity in Farm Technology Endowment and its Efficient Use | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_education)
 * Digging into the Linkages Between Resource Extraction and Farm Performance | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_resource_extract)
+* Peace and Social Cohesion is Associated with Efficient Utilization of High Output Oriented Crop Production Technologies in Ghana | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_conflict)
   
 ## Scheduled Studies 
 * The link between extension services and Farm Technology Endowment and its Efficient Use | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_extension)
