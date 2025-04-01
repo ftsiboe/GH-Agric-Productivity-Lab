@@ -1,6 +1,7 @@
 
 rm(list=ls(all=TRUE));gc()
-setwd(ifelse(Sys.info()['sysname'] =="Windows",getwd(),"/homes/ftsiboe/Articles/GH/GH_AgricProductivityLab/"))
+setwd(ifelse(Sys.info()['sysname'] =="Windows",paste0("C:/Users/",Sys.info()['user'],"/Documents/GitHub/GH-Agric-Productivity-Lab"),
+             paste0("/homes/",Sys.info()['user'],"/Articles/GH/GH_AgricProductivityLab/")))
 PROJECT <- getwd()
 source(paste0(getwd(),"/codes/figures_and_tables.R"))
 setwd(paste0(getwd(),"/replications/tech_inefficiency_education"))
@@ -19,8 +20,17 @@ openxlsx::saveWorkbook(wb,"results/tech_inefficiency_education_results_smf.xlsx"
 
 # Fig - Heterogeneity          
 rm(list= ls()[!(ls() %in% c(Keep.List))])
-fig <- fig_heterogeneity00(res=readRDS("results/estimations/CropID_Pooled_educated_TL_hnormal_optimal.rds")$disagscors,
-                    y_title="Percentage Difference (Educated less Uneducated)\n")
+res <- readRDS("results/estimations/CropID_Pooled_educated_TL_hnormal_optimal.rds")$disagscors
+res$disasg <- as.character(res$disagscors_var)
+res$level <- as.character(res$disagscors_level)
+res <- res[res$estType %in% "teBC",]
+res <- res[res$Survey %in% "GLSS0",]
+res <- res[res$restrict %in% "Restricted",]
+res <- res[res$stat %in% "mean",]
+res <- res[!res$sample %in% "unmatched",]
+res <- res[res$CoefName %in% "disag_efficiencyGap_pct",]
+res <- res[c("disasg","level","FXN","DIS","Survey","input","TCH","Tech","CoefName","Estimate","Estimate.sd","jack_pv")]
+fig <- fig_heterogeneity00(res=res,y_title="Percentage Difference (Educated less Uneducated)\n")
 ggsave("results/figures/heterogeneity_crop_region.png", fig[["crop_region"]],dpi = 600,width = 8, height = 5)
 ggsave("results/figures/heterogeneity_genderAge.png", fig[["genderAge"]],dpi = 600,width = 5, height = 5)
 
@@ -32,13 +42,11 @@ fig_robustness(y_title="\nDifference (%) [Educated less Uneducated]",
 
 # Fig - Matching TE      
 rm(list= ls()[!(ls() %in% c(Keep.List))])
-
 fig_input_te(y_title="\nEducation gap (%)",tech_lable=c("Full sample", "Educated sample", "Uneducated sample"))
 
 # Fig - Covariate balance 
 rm(list= ls()[!(ls() %in% c(Keep.List))])
 fig_covariate_balance()
-
 
 # Fig - Distribution 
 dataFrq <- readRDS("results/estimations/CropID_Pooled_educated_TL_hnormal_fullset.rds")

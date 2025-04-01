@@ -1,5 +1,6 @@
 rm(list=ls(all=TRUE));gc()
-setwd(ifelse(Sys.info()['sysname'] =="Windows",getwd(),"/homes/ftsiboe/Articles/GH/GH_AgricProductivityLab/"))
+setwd(ifelse(Sys.info()['sysname'] =="Windows",paste0("C:/Users/",Sys.info()['user'],"/Documents/GitHub/GH-Agric-Productivity-Lab"),
+             paste0("/homes/",Sys.info()['user'],"/Articles/GH/GH_AgricProductivityLab/")))
 PROJECT <- getwd()
 source(paste0(getwd(),"/codes/helpers_tech_inefficiency.R"))
 setwd(paste0(getwd(),"/replications/tech_inefficiency_disability"))

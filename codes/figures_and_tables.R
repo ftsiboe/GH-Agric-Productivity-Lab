@@ -491,6 +491,8 @@ fig_robustness <- function(y_title,res_list){
   
   dataF <- rbind(efficiency,production,distribution,tendency,sample,Restricted)
   
+  dataF <- doBy::summaryBy(Estimate+Estimate.sd~dimension+options+type,data=dataF,FUN=mean,keep.names=T,na.rm=T)
+  
   dataF <- dplyr::inner_join(dataF,mainest,by=c("type"))
   
   saveRDS(dataF,file=paste0("results/figuresData/robustness.rds"))
