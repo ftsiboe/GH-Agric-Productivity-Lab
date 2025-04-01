@@ -97,7 +97,7 @@ rm(list= ls()[!(ls() %in% c(Keep.List))])
 data <- as.data.frame(
   data.table::rbindlist(
     lapply(
-      c("results/estimations/CropID_Pooled_index0CAT_CD_hnormal_optimal.rds",
+      c("results/estimations/CropID_Pooled_index0CAT_CD_hnormal.rds",
         list.files("results/estimations/",pattern = "CropID_Pooled_index0CAT_TL_",full.names = T)),
       function(file) {
         tryCatch({
@@ -119,11 +119,6 @@ data <- data %>% group_by(sample,Tech,type,estType,Survey,stat,CoefName,restrict
 
 data <- data[data$Estimate.length_max == data$Estimate.length,]
 
-mainest <- unique(data[(data$FXN %in% "TL" & data$DIS %in% "hnormal" & data$stat %in% "wmean" & data$estType %in% "teBC" & 
-                          data$restrict %in% c("Restricted")),])
-mainest <- mainest[c("Tech","type","Estimate","Estimate.sd")]
-names(mainest) <- c("Tech","type","mainest","mainest.sd")
-
 production <- unique(data[(data$DIS %in% "hnormal" & data$stat %in% "wmean" & data$estType %in% "teBC" & 
                              data$restrict %in% c("Restricted")),])
 production$options <- ifelse(production$FXN %in% "CD","Cobb-Douglas production function",NA)
@@ -132,7 +127,7 @@ production$options <- ifelse(production$FXN %in% "LN","Linear production functio
 production$options <- ifelse(production$FXN %in% "QD","Quadratic production function",production$options)
 production$options <- ifelse(production$FXN %in% "GP","Generalized production function",production$options)
 production$options <- ifelse(production$FXN %in% "TP","Transcendental production function",production$options)
-production <- production[c("Tech","options","type","Estimate","Estimate.sd")]
+production <- production[c("Tech","options","type","Estimate","Estimate.sd","jack_pv")]
 production$dimension <- "(A) production"
 production
 
@@ -149,7 +144,7 @@ distribution$options <- ifelse(distribution$DIS %in% "lognormal","Log normal dis
 distribution$options <- ifelse(distribution$DIS %in% "weibull","Weibull distribution",distribution$options)
 distribution$options <- ifelse(distribution$DIS %in% "tslaplace","Truncated skewed Laplace distribution",distribution$options)
 distribution$options <- ifelse(distribution$DIS %in% "genexponential","Generalized exponential distribution",distribution$options)
-distribution <- distribution[c("Tech","options","type","Estimate","Estimate.sd")]
+distribution <- distribution[c("Tech","options","type","Estimate","Estimate.sd","jack_pv")]
 distribution$Estimate.sd <- ifelse(distribution$options %in% c("Rayleigh distribution","Truncated normal distribution"),NA,distribution$Estimate.sd)
 distribution$dimension <- "(B) distribution"
 distribution
@@ -159,7 +154,7 @@ efficiency <- unique(data[(data$DIS %in% "hnormal" & data$stat %in% "wmean" &
 efficiency$options <- ifelse(efficiency$estType %in% "teJLMS","Jondrow et al. (1982) efficiency",NA)
 efficiency$options <- ifelse(efficiency$estType %in% "teBC","Battese and Coelli (1988) efficiency",efficiency$options)
 efficiency$options <- ifelse(efficiency$estType %in% "teMO","Conditional model efficiency",efficiency$options)
-efficiency <- efficiency[c("Tech","options","type","Estimate","Estimate.sd")]
+efficiency <- efficiency[c("Tech","options","type","Estimate","Estimate.sd","jack_pv")]
 efficiency$dimension <- "(C) efficiency"
 efficiency
 
@@ -170,27 +165,34 @@ tendency$options <- ifelse(tendency$stat %in% "wmean","Weighted mean efficiency 
 tendency$options <- ifelse(tendency$stat %in% "mean","Simple mean efficiency aggregation",tendency$options)
 tendency$options <- ifelse(tendency$stat %in% "median","Median efficiency aggregation",tendency$options)
 #tendency$options <- ifelse(tendency$stat %in% "mode","modal efficiency aggregation",tendency$options)
-tendency <- tendency[c("Tech","options","type","Estimate","Estimate.sd")]
+tendency <- tendency[c("Tech","options","type","Estimate","Estimate.sd","jack_pv")]
 tendency$dimension <- "(D) tendency"
-
 
 Restricted <- unique(data[(data$FXN %in% "TL" & data$DIS %in% "hnormal" & data$stat %in% "wmean" & data$estType %in% "teBC"),])
 Restricted$options <- paste0(Restricted$restrict," production function")
-Restricted <- Restricted[c("Tech","options","type","Estimate","Estimate.sd")]
+Restricted <- Restricted[c("Tech","options","type","Estimate","Estimate.sd","jack_pv")]
 Restricted$dimension <- "(F) Production function properties"
 Restricted
 
 dataF <- rbind(efficiency,production,distribution,tendency,Restricted)
 
+dataF <- dataF[c("dimension","options","Tech","type","Estimate","Estimate.sd","jack_pv")]
+
+saveRDS(dataF,file=paste0("results/figuresData/robustness.rds"))
+
 wb <- openxlsx::loadWorkbook("results/tech_inefficiency_conflict_results.xlsx")
-openxlsx::writeData(wb, sheet = "Index",dataF , colNames = T)
+openxlsx::writeData(wb, sheet = "robustness",dataF , colNames = T)
 openxlsx::saveWorkbook(wb,"results/tech_inefficiency_conflict_results.xlsx",overwrite = T)
 
-
 #------------------------------------
-
-
-
-
-
-
+# Fig - Distribution              ####  
+rm(list= ls()[!(ls() %in% c(Keep.List))])
+dataFrq <- readRDS("results/estimations/CropID_Pooled_index0CAT_TL_hnormal.rds")
+dataFrq <- dataFrq$ef_dist
+dataFrq <- dataFrq[dataFrq$estType %in% "teBC",]
+dataFrq <- dataFrq[dataFrq$Survey %in% "GLSS0",]
+dataFrq <- dataFrq[dataFrq$stat %in% "weight",]
+dataFrq <- dataFrq[dataFrq$restrict %in% "Restricted",]
+dataFrq$Tech <- factor(as.numeric(as.character(dataFrq$TCHLvel)),levels = 0:2,c("Low","Medium","High"))
+fig_dsistribution(dataFrq=dataFrq,colset=c("thistle","violet","purple"))
+#------------------------------------

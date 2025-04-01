@@ -493,6 +493,8 @@ fig_robustness <- function(y_title,res_list){
   
   dataF <- dplyr::inner_join(dataF,mainest,by=c("type"))
   
+  saveRDS(dataF,file=paste0("results/figuresData/robustness.rds"))
+  
   xlab <- doBy::summaryBy(Estimate~dimension+options,data=dataF[dataF$type %in% "MTE",],FUN=mean)
   
   xlab <- xlab[order(xlab$Estimate.mean),]
@@ -613,7 +615,7 @@ figTe <- ggplot(data=data,aes(x=reorder(outC,est), y=est,group=level,color=level
         strip.background = element_rect(fill = "white", colour = "black", size = 1))+ coord_flip();figTe
 
 write.csv(data,file=paste0("results/figuresData/input_TE_data.csv"))
-
+saveRDS(data,file=paste0("results/figuresData/input_TE_data.rds"))
 ggsave(paste0("results/figures/input_TE.png"), figTe,dpi = 600,width = 6, height =5)
 return("done-input_TE")
 }
