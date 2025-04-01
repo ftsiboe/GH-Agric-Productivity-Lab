@@ -84,13 +84,13 @@ fig[["genderAge"]] <- fig[["genderAge"]] + theme(axis.text.x = element_text(size
   scale_fill_manual(name="Score:",values = c("thistle","violet","purple")) +
   scale_color_manual(name="Score:",values = c("thistle","violet","purple")) +
   scale_shape_manual(name="Peace and social cohesion:",values = c(21,22,23,24,25,8,4))
-ggsave("results/figures/heterogeneity_genderAge.png", fig[["genderAge"]],dpi = 600,width = 8, height = 5)
+ggsave("results/figures/heterogeneity_genderAge.png", fig[["genderAge"]],dpi = 600,width = 8.3, height = 4.7)
 
 fig[["crop_region"]] <- fig[["crop_region"]] + theme(axis.text.x = element_text(size = 5.5)) +
   scale_fill_manual(name="Score:",values = c("thistle","violet","purple")) +
   scale_color_manual(name="Score:",values = c("thistle","violet","purple")) +
   scale_shape_manual(name="Peace and social cohesion:",values = c(21,22,23,24,25,8,4))
-ggsave("results/figures/heterogeneity_crop_region.png", fig[["crop_region"]],dpi = 600,width = 8, height = 5)
+ggsave("results/figures/heterogeneity_crop_region.png", fig[["crop_region"]],dpi = 600,width = 8.3, height = 6.2)
 #------------------------------------
 # Fig - Robustness                ####           
 rm(list= ls()[!(ls() %in% c(Keep.List))])
