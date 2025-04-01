@@ -1,4 +1,4 @@
-# GH-Agric-Productivity-Lab: Codes Directory
+# GH-Agric-Productivity-Lab: Codes
 For details about the project and its broader context, please refer to the main [GH-Agric-Productivity-Lab README](../README.md) in the repository's root.
 
 This directory contains the code and scripts used for technical inefficiency analysis and productivity modeling, particularly using stochastic frontier analysis (SFA) and related econometric techniques.
