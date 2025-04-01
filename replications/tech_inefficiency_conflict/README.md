@@ -4,6 +4,8 @@ For details about the project and its broader context, please refer to the main 
 
 See the [LICENSE](../LICENSE) file in the repository's root for details.
 
+*All tables and figures are final and up to date as of 03/31/2025
+
 ## Extended abstract
 
 
