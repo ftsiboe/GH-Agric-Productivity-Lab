@@ -8,6 +8,8 @@ This directory contains replication data files for the agricultural productivity
 
 See the [LICENSE](../LICENSE) file in the repository root for details.
 
+We welcome constructive feedback on these datasets and are actively seeking collaborations to further research using this data.
+
 ## Data Sources and Construction
 
 The project relies on farm-level data drawn from population-based surveys administered periodically (approximately every five years) in Ghana. These surveys include all seven rounds of the Ghana Living Standards Surveys (GLSS). Each GLSS follows a two-stage sampling procedure:
