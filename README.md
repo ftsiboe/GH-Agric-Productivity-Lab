@@ -1,5 +1,7 @@
 # Agricultural Productivity in Ghana
 
+*Collaborations with enthusiastic and committed graduate students are welcomed. For more details see the wiki on [Graduate Student Opportunity to Lead Research on Agricultural Productivity in Ghana](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/wiki/Graduate-Student-Opportunity-to-Lead-Research-on-Agricultural-Productivity-in-Ghana)*
+
 ## Objective
 The primary objective of this project is to ascertain whether observed agricultural production shortfalls in Ghana are due solely to farmer technical inefficiency, technology gaps, or a combination of both.
 
