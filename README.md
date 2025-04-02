@@ -31,7 +31,7 @@ By clearly identifying the root causes of production shortfalls, this project co
 * [Technology Gaps Drive Inequality in Production for Farmers with Disabilities](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/blob/master/replications/tech_inefficiency_disability/DisabilityAgricProdGapGhana_public_version.pdf) | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_disability)
 * The Education Disparity in Farm Technology Endowment and its Efficient Use | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_education)
 * Digging into the Linkages Between Resource Extraction and Farm Performance | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_resource_extract)
-* Peace and Social Cohesion is Associated with Efficient Utilization of High Output Oriented Crop Production Technologies in Ghana | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_conflict)
+* Societal Peace and Cohesion Improve Farm Technology and Technical Efficiency in Ghana | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_conflict)
   
 ## Scheduled Studies 
 * The link between extension services and Farm Technology Endowment and its Efficient Use | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_extension)
