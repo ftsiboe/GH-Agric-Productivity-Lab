@@ -9,7 +9,7 @@ It compiles a series of research articles that assess farmer-specific and instit
 
 By identifying the root causes of production shortfalls, this project provides empirical evidence crucial for policy discussions aimed at enhancing agricultural productivity in contexts with limited access to new technologies.
 
-## Data and Code Availability
+## Data
 The project utilizes farm-level data from the Ghana Living Standards Surveys (GLSS), which are population-based surveys conducted periodically, approximately every five years, in Ghana: [GLSS1](https://microdata.statsghana.gov.gh/index.php/catalog/7),  [GLSS2](https://microdata.statsghana.gov.gh/index.php/catalog/4), [GLSS3](https://microdata.statsghana.gov.gh/index.php/catalog/12), [GLSS4](https://microdata.statsghana.gov.gh/index.php/catalog/14), [GLSS5](https://microdata.statsghana.gov.gh/index.php/catalog/5), [GLSS6](https://microdata.statsghana.gov.gh/index.php/catalog/72), and [GLSS7](https://microdata.statsghana.gov.gh/index.php/catalog/97)
 
 ## Methods
