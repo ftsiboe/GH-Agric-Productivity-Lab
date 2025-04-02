@@ -2,19 +2,19 @@
 
 *Collaborations with enthusiastic and committed graduate students are welcomed. For more details see the wiki on [Graduate Student Opportunity to Lead Research on Agricultural Productivity in Ghana](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/wiki/Graduate-Student-Opportunity-to-Lead-Research-on-Agricultural-Productivity-in-Ghana)*
 
-## Objective
+## Overview
 The primary objective of this project is to ascertain whether observed agricultural production shortfalls in Ghana are due solely to farmer technical inefficiency, technology gaps, or a combination of both.
 
-## Project Overview
-This project compiles a series of research articles leveraging extensive datasets collected from multiple cross-sectional, population-based surveys conducted throughout Ghana from 1987 to 2017. These studies employ Meta-Stochastic-Frontier (MSF) models, accounting for technological heterogeneity and technical inefficiencies among farmers.
-
-Each article evaluates various farmer-specific and institutional factors that either enhance or mitigate technical inefficiency and influence the adoption of superior agricultural technologies. 
+This project compiles a series of research articles that assess various farmer-specific and institutional factors, examining how they either enhance or mitigate technical inefficiency and influence the adoption of advanced agricultural technologies.
 
 By clearly identifying the root causes of production shortfalls, this project contributes empirical evidence essential for policy discussions aimed at boosting agricultural productivity in contexts with limited availability of new technologies.
 
+## Data and Code Availability
+The project utilizes farm-level data from the Ghana Living Standards Surveys (GLSS), which are population-based surveys conducted periodically, approximately every five years, in Ghana: [GLSS1](https://microdata.statsghana.gov.gh/index.php/catalog/7),  [GLSS2](https://microdata.statsghana.gov.gh/index.php/catalog/4), [GLSS3](https://microdata.statsghana.gov.gh/index.php/catalog/12), [GLSS4](https://microdata.statsghana.gov.gh/index.php/catalog/14), [GLSS5](https://microdata.statsghana.gov.gh/index.php/catalog/5), [GLSS6](https://microdata.statsghana.gov.gh/index.php/catalog/72), and [GLSS7](https://microdata.statsghana.gov.gh/index.php/catalog/97)
+
 ## Methods
-- Meta-Stochastic-Frontier (MSF) modeling as proposed by [Huang, Huang, & Liu (2014)](https://doi.org/10.1007/s11123-014-0402-2).
-- To minimize self-selection bias and to reduce model dependency, a matching approach is also utilized as applicable ([Abadie and Imbens 2006](https://doi.org/10.1111/j.1468-0262.2006.00655.x); [Abadie and Imbens 2016](https://doi.org/10.3982/ECTA11293)).
+- The Meta-Stochastic Frontier (MSF) model, as introduced by [Huang, Huang, & Liu (2014)](https://doi.org/10.1007/s11123-014-0402-2), is employed to capture technological heterogeneity and technical inefficiencies across farmers.
+- To minimize self-selection bias and to reduce model dependency, a matching approach is also utilized where applicable ([Abadie and Imbens 2006](https://doi.org/10.1111/j.1468-0262.2006.00655.x); [Abadie and Imbens 2016](https://doi.org/10.3982/ECTA11293)).
 
 ## Published Studies
 * [**Technology and managerial performance of farm operators by age in Ghana**](https://doi.org/10.1007/s11123-023-00679-y)  | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/blob/master/replications/legacy_studies/2023%20Technology%20and%20managerial%20performance%20of%20farm%20operators%20by%20age%20in%20Ghana.zip)
