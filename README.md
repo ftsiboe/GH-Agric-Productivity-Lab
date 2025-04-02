@@ -3,11 +3,11 @@
 *Collaborations with enthusiastic and committed graduate students are welcomed. For more details see the wiki on [Graduate Student Opportunity to Lead Research on Agricultural Productivity in Ghana](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/wiki/Graduate-Student-Opportunity-to-Lead-Research-on-Agricultural-Productivity-in-Ghana)*
 
 ## Overview
-The primary objective of this project is to ascertain whether observed agricultural production shortfalls in Ghana are due solely to farmer technical inefficiency, technology gaps, or a combination of both.
+The primary objective of this project is to determine whether agricultural production shortfalls in Ghana are driven by farmer technical inefficiency, technology gaps, or a combination of both.
 
-This project compiles a series of research articles that assess various farmer-specific and institutional factors, examining how they either enhance or mitigate technical inefficiency and influence the adoption of advanced agricultural technologies.
+It compiles a series of research articles that assess farmer-specific and institutional factors, exploring how they influence technical inefficiency and the adoption of advanced agricultural technologies.
 
-By clearly identifying the root causes of production shortfalls, this project contributes empirical evidence essential for policy discussions aimed at boosting agricultural productivity in contexts with limited availability of new technologies.
+By identifying the root causes of production shortfalls, this project provides empirical evidence crucial for policy discussions aimed at enhancing agricultural productivity in contexts with limited access to new technologies.
 
 ## Data and Code Availability
 The project utilizes farm-level data from the Ghana Living Standards Surveys (GLSS), which are population-based surveys conducted periodically, approximately every five years, in Ghana: [GLSS1](https://microdata.statsghana.gov.gh/index.php/catalog/7),  [GLSS2](https://microdata.statsghana.gov.gh/index.php/catalog/4), [GLSS3](https://microdata.statsghana.gov.gh/index.php/catalog/12), [GLSS4](https://microdata.statsghana.gov.gh/index.php/catalog/14), [GLSS5](https://microdata.statsghana.gov.gh/index.php/catalog/5), [GLSS6](https://microdata.statsghana.gov.gh/index.php/catalog/72), and [GLSS7](https://microdata.statsghana.gov.gh/index.php/catalog/97)
