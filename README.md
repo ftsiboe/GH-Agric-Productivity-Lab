@@ -13,7 +13,8 @@ Each article evaluates various farmer-specific and institutional factors that ei
 By clearly identifying the root causes of production shortfalls, this project contributes empirical evidence essential for policy discussions aimed at boosting agricultural productivity in contexts with limited availability of new technologies.
 
 ## Methods
-- Meta-Stochastic-Frontier (MSF) modeling as proposed by Huang, Huang, & Liu (2014).
+- Meta-Stochastic-Frontier (MSF) modeling as proposed by [Huang, Huang, & Liu (2014)](https://doi.org/10.1007/s11123-014-0402-2).
+- To minimize self-selection bias and to reduce model dependency, a matching approach is also utilized as applicable ([Abadie and Imbens 2006](https://doi.org/10.1111/j.1468-0262.2006.00655.x); [Abadie and Imbens 2016](https://doi.org/10.3982/ECTA11293)).
 
 ## Published Studies
 * [**Technology and managerial performance of farm operators by age in Ghana**](https://doi.org/10.1007/s11123-023-00679-y)  | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/blob/master/replications/legacy_studies/2023%20Technology%20and%20managerial%20performance%20of%20farm%20operators%20by%20age%20in%20Ghana.zip)
