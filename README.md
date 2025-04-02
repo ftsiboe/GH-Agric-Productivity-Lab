@@ -8,7 +8,7 @@ The primary objective of this project is to ascertain whether observed agricultu
 ## Project Overview
 This project compiles a series of research articles leveraging extensive datasets collected from multiple cross-sectional, population-based surveys conducted throughout Ghana from 1987 to 2017. These studies employ Meta-Stochastic-Frontier (MSF) models, accounting for technological heterogeneity and technical inefficiencies among farmers.
 
-Each article evaluates various farmer-specific and institutional factors that either enhance or mitigate technical inefficiency and influence the adoption of superior agricultural technologies. Additionally, spatially explicit maps detailing regional-level technical inefficiencies, technology adoption rates, and inefficiencies resulting from technology gaps are generated. These maps serve as essential policy tools.
+Each article evaluates various farmer-specific and institutional factors that either enhance or mitigate technical inefficiency and influence the adoption of superior agricultural technologies. 
 
 By clearly identifying the root causes of production shortfalls, this project contributes empirical evidence essential for policy discussions aimed at boosting agricultural productivity in contexts with limited availability of new technologies.
 
