@@ -29,8 +29,8 @@ The project utilizes farm-level data from the Ghana Living Standards Surveys (GL
 
 ## Work in Progress
 * [Technology Gaps Drive Inequality in Production for Farmers with Disabilities](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/blob/master/replications/tech_inefficiency_disability/DisabilityAgricProdGapGhana_public_version.pdf) | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_disability)
-* The Education Disparity in Farm Technology Endowment and its Efficient Use | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_education)
-* Digging into the Linkages Between Resource Extraction and Farm Performance | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_resource_extract)
+* [Heterogeneous Impacts of Farmer Education on Technology Access and Technical Efficiency in Ghana](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_education#heterogeneous-impacts-of-farmer-education-on-technology-access-and-technical-efficiency-in-ghana) | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_education)
+* [Digging into the Linkages Between Resource Extraction and Farm Performance](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_resource_extract#digging-into-the-linkages-between-resource-extraction-and-farm-performance) | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_resource_extract)
 * Societal Peace and Cohesion Improve Farm Technology and Technical Efficiency in Ghana | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_conflict)
   
 ## Scheduled Studies 
