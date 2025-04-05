@@ -45,13 +45,12 @@ The datasets and code used in this project are openly available to facilitate re
 ## 📬 Contact
 Constructive feedback is highly appreciated, and collaborations using the available codes and data are actively encouraged. Please reach out by sending emails to Francis Tsiboe ([ftsiboe@hotmail.com](mailto:ftsiboe@hotmail.com)).
 
-## Funding
+## 💰 Funding
 This project did not receive any external funding.
 
-## 💰 Funding
+## 📚 Citation
 If you find this repository useful, please star this project and cite our papers listed above.
 
-## 📚 Citation
 See the [LICENSE](../LICENSE) file in the repository's root for details.
 
 *Maintained by [ftsiboe](https://github.com/ftsiboe)*
