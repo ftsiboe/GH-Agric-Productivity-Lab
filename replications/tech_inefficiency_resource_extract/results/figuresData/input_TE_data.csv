@@ -1,0 +1,43 @@
+"","method","distance","link","outcome","level","est","jack_n","jack_mean","jack_se","jack_tvl","jack_pvl","outC"
+"20","nearest","euclidean",NA,"SeedKg","Any extraction
+sample",-53.1649442084401,101,-53.2167519438463,0.96998773362994,-54.8633246574116,0,"Planting materials (real value)"
+"19","nearest","euclidean",NA,"SeedKg","Full
+sample",-51.2786456679756,101,-51.3611154500863,0.89679315506047,-57.2719753270452,0,"Planting materials (real value)"
+"21","nearest","euclidean",NA,"SeedKg","No extraction
+sample",-49.250814762731,101,-49.3662092437691,0.97921814836178,-50.4139035069541,0,"Planting materials (real value)"
+"48","nearest","euclidean",NA,"FertKg","No extraction
+sample",-43.8330664972834,101,-44.0911899789185,0.665771135333884,-66.2257458139978,0,"Fertilizer (Kg/ha)"
+"46","nearest","euclidean",NA,"FertKg","Full
+sample",-43.8209756721147,101,-43.9524265281481,0.60895616144942,-72.1766677317687,0,"Fertilizer (Kg/ha)"
+"47","nearest","euclidean",NA,"FertKg","Any extraction
+sample",-43.8095789821099,101,-43.8227834799482,0.691331464348894,-63.3889613591089,0,"Fertilizer (Kg/ha)"
+"56","nearest","euclidean",NA,"PestLt","Any extraction
+sample",-42.4733493204537,101,-42.7032777643842,0.740374213651637,-57.6779647062061,0,"Pesticide (Liter/ha)"
+"55","nearest","euclidean",NA,"PestLt","Full
+sample",-42.3406995569832,101,-42.3896942936924,0.633145030005242,-66.9510021950919,0,"Pesticide (Liter/ha)"
+"57","nearest","euclidean",NA,"PestLt","No extraction
+sample",-42.1972485686119,101,-42.0528108290124,0.703876068388378,-59.7446236882271,0,"Pesticide (Liter/ha)"
+"38","nearest","euclidean",NA,"HirdHr","Any extraction
+sample",-38.0126812234121,101,-37.7830442611189,0.803684296083448,-47.0122963024722,0,"Hired labor (man-days/ha)"
+"37","nearest","euclidean",NA,"HirdHr","Full
+sample",-37.4375538382618,101,-37.3393128390047,0.731194042486211,-51.0662159008344,0,"Hired labor (man-days/ha)"
+"39","nearest","euclidean",NA,"HirdHr","No extraction
+sample",-36.8510402090524,101,-36.8882485148269,0.968818983266492,-38.0754807161743,0,"Hired labor (man-days/ha)"
+"12","nearest","euclidean",NA,"Area","No extraction
+sample",-8.22201178373865,101,-8.19976396200244,0.239771776822719,-34.1982032692077,0,"Land (ha)"
+"10","nearest","euclidean",NA,"Area","Full
+sample",-6.85881855686057,101,-6.88213817139512,0.247203270793678,-27.8399964098336,0,"Land (ha)"
+"11","nearest","euclidean",NA,"Area","Any extraction
+sample",-5.60194207764881,101,-5.66682259423818,0.29403184941237,-19.2728189329267,0,"Land (ha)"
+"2","nearest","euclidean",NA,"HrvstKg","Any extraction
+sample",-5.52985773491501,101,-5.5738505598169,0.308505094990117,-18.0672885159173,0,"Output (real value)"
+"1","nearest","euclidean",NA,"HrvstKg","Full
+sample",-4.82799044509905,101,-4.86086421701352,0.288670964293552,-16.8387708438541,0,"Output (real value)"
+"29","nearest","euclidean",NA,"HHLaborAE","Any extraction
+sample",-4.43371691123274,101,-4.36381933962463,0.327306669018251,-13.3325097001958,0,"Household labor (AE)"
+"3","nearest","euclidean",NA,"HrvstKg","No extraction
+sample",-4.06803788539748,101,-4.08893666440064,0.286557185379898,-14.2691821144872,0,"Output (real value)"
+"28","nearest","euclidean",NA,"HHLaborAE","Full
+sample",-2.39354875885762,101,-2.42486185942437,0.343230310272755,-7.06482436675657,2.27088126081298e-10,"Household labor (AE)"
+"30","nearest","euclidean",NA,"HHLaborAE","No extraction
+sample",-0.189916946375558,101,-0.326347514363455,0.408271000990194,-0.799340422346806,0.426006725071357,"Household labor (AE)"
