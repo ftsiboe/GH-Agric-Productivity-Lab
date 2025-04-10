@@ -1,10 +1,10 @@
-use "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_disability\data\tech_inefficiency_disability_data",clear
+use "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_financial_inclusion\data\tech_inefficiency_financial_inclusion_data",clear
 decode CropID,gen(CropIDx)
 keep if CropIDx == "Pooled"
 qui levelsof CropIDx, local(levels)
-tab disabled
+tab credit_hh
 
-qui foreach disab in disabled disabled_self disabled_spouse disabled_child disabled_close disabled_member{
+qui foreach disab in credit_hh credit_self credit_spouse credit_child credit_close credit_member{
 	
 mat drop _all
 sca drop _all
@@ -12,14 +12,14 @@ sca drop _all
 loc ApID0 = 0
 tempfile Summaries DATA
 
-use "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_disability\data\tech_inefficiency_disability_data",clear
+use "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_financial_inclusion\data\tech_inefficiency_financial_inclusion_data",clear
 decode CropID,gen(CropIDx)
 qui levelsof CropIDx, local(levels)
 
 qui foreach crop in `levels'{
   
 *loc crop "Pooled"
-use "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_disability\data\tech_inefficiency_disability_data",clear
+use "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_financial_inclusion\data\tech_inefficiency_financial_inclusion_data",clear
 decode CropID,gen(CropIDx)
 keep if CropIDx == "`crop'"
 gen disagCat = `disab'
@@ -82,7 +82,7 @@ restore
 }
 mat li Means
 
-qui foreach Var of var Female EqipMech Credit OwnLnd EqipIrig{
+qui foreach Var of var Female EqipMech OwnLnd EqipIrig{
 preserve
 cap{
 *Overall and regional means 
@@ -206,37 +206,97 @@ loc ApID0=`ApID0'+1
 use `Summaries', clear
 
 export excel CropIDx Equ Coef Beta SE Tv Pv Min Max SD N /*
-*/ using "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_disability\results\tech_inefficiency_disability_results.xlsx", /*
+*/ using "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_financial_inclusion\results\tech_inefficiency_financial_inclusion_results.xlsx", /*
 */ sheet("Means_`disab'") sheetmodify firstrow(variables) 
 
 }
 
+
+
 mat drop _all
 sca drop _all
-use "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_disability\data\tech_inefficiency_disability_data",clear
+use "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_financial_inclusion\data\tech_inefficiency_financial_inclusion_data",clear
+tab FinIdxCat,gen(FinIdxCatx)
+tab CreditCat,gen(CreditCatx)
 decode CropID,gen(CropIDx)
-tabstat disabled disabCat* if CropIDx == "Cassava",by(Surveyx) save
+unab Person: FinWorker YerEdu HHFinWorker // Variables related to the person
+unab Insured: Insured_*   // Variables related to insurance
+unab Banked: Banked       // Variables related to banking
+unab InstTyp: InstTyp_*   // Variables related to types of financial institutions
+unab AccTyp: AccTyp_*     // Variables related to types of accounts
+unab PrdTyp: PrdTyp_* CreditCatx*    // Variables related to types of transaction products
+unab Loan: Credit  // Variables related to loans
+unab Community: BankKm RoadKm TrnprtKm  // Variables related to the community
+
+// Combine all the above variables into a single local macro 'Factors'
+loc Factors credit_self `Insured' `Banked' `InstTyp' `AccTyp' `PrdTyp' `Loan' `Community' FinIdxCatx* 
+
+tabstat `Factors' if CropIDx == "Pooled",by(Surveyx) save
+keep if CropIDx == "Pooled"
+sum Season
 gen Trend=Season-r(min)
 egen Clust = group(Survey Ecozon EaId HhId)
 mat Means=J(1,8,.)
 
-qui foreach Var in disabled disabCat1 disabCat2 disabCat3 disabCat4 disabCat5 disabCat6 disabCat7{
+qui foreach Var in FinIdx FinIdxSi LoanAmt `Person'{
 	qui levelsof CropIDx, local(levels)
 	qui foreach crop in `levels'{
 		preserve
 		cap{
 			
-			*loc Var disabled
+			*loc Var LoanAmt
+			*loc crop "Pooled"
+			keep if CropIDx == "`crop'"
+			*sum `Var' Trend
+			*Overall and regional means 
+			qui reg `Var' Trend, vce(cluster Clust) 
+			margins, eydx(Trend) grand coefl post
+			qui ereturn display
+			mat A = r(table)'
+			mat A = A[1...,1..8]  
+		
+			tabstat `Var' , stat(mean sem min max sd n) by(Surveyx) save
+			foreach mt in Stat1 Stat2 StatTotal{
+				mat B = r(`mt')'
+				mat B = B[1...,1],B[1...,2],J(rowsof(B),1,.),J(rowsof(B),1,.),B[1...,3],B[1...,4],B[1...,5],B[1...,6]
+				mat A =A\B
+				mat drop B
+			}
+
+			mat rownames A = "`crop'_Trend" "`crop'_GLSS6" "`crop'_GLSS7" "`crop'_GLSS0"
+			mat roweq A= `Var'
+			mat Means = A\Means	
+			mat drop A
+		}
+		restore
+	}
+}
+
+mat li Means
+
+
+qui foreach Var in `Factors' {
+	qui levelsof CropIDx, local(levels)
+	qui foreach crop in `levels'{
+		preserve
+		cap{
+			
+			*loc Var InstTyp_Momo
 			*loc crop "Pooled"
 			keep if CropIDx == "`crop'"
 			
-			*Overall and regional means 
-			qui logit `Var' i.Survey, vce(cluster Clust) 
-			margins Survey, grand coefl post
-			nlcom ("Trend":(_b[6bn.Survey]-_b[7.Survey])*100), post
-			qui ereturn display
-			mat A = r(table)'
-			mat A = A[1...,1..8]
+			mat A = J(1,8,.)
+			tab Survey if `Var' == 1
+			if(`r(r)' > 1){
+				*Overall and regional means 
+				qui logit `Var' i.Survey, vce(cluster Clust) 
+				margins Survey, grand coefl post
+				nlcom ("Trend":(_b[6bn.Survey]-_b[7.Survey])*100), post
+				qui ereturn display
+				mat A = r(table)'
+				mat A = A[1...,1..8]  
+			}
+		
 			tabstat `Var' , stat(mean sem min max sd n) by(Surveyx) save
 			foreach mt in Stat1 Stat2 StatTotal{
 				mat B = r(`mt')'
@@ -276,5 +336,5 @@ keep Variable crop mesure Beta SE Tv Pv Min Max SD N
 order Variable crop mesure Beta SE Tv Pv Min Max SD N
 
 export excel Variable crop mesure Beta SE Tv Pv Min Max SD N /*
-*/ using "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_disability\results\tech_inefficiency_disability_results.xlsx", /*
-*/ sheet("disability") sheetmodify firstrow(variables) 
+*/ using "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_financial_inclusion\results\tech_inefficiency_financial_inclusion_results.xlsx", /*
+*/ sheet("inclusion") sheetmodify firstrow(variables) 
