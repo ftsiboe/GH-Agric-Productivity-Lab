@@ -1,31 +1,31 @@
 "","Tech","input","disasg","level","Estimate","Estimate.sd","jack_pv"
-"3",2,"Technology gap ratio","Region","Ashanti",22.8158548880681,8.16289614639116,0.00622
-"6",2,"Technology gap ratio","Region","Brong Ahafo",12.5104064656885,6.52466637034869,0.05804
-"9",2,"Technology gap ratio","Region","Western",30.6842503942309,8.21207983647909,0.00031
-"12",2,"Technology gap ratio","Region","Central",15.0982833865788,6.84336380848934,0.02965
-"15",2,"Technology gap ratio","Region","Greater Accra",4.39509718988131,7.49962856585601,0.55917
-"18",2,"Technology gap ratio","Region","Volta",18.4087321580653,6.77382417813249,0.00775
-"21",2,"Technology gap ratio","Region","Eastern",16.0757815478462,7.41367998334847,0.0325
-"24",2,"Technology gap ratio","Region","Upper East",-0.0978857833051551,0.0235009487338786,7e-05
-"27",2,"Technology gap ratio","Region","Upper West",-0.0554705576875782,0.0132124901087135,6e-05
-"30",2,"Technology gap ratio","Region","Northern",-0.00466942855092076,0.00366033487321023,0.20502
-"2",2,"Technical efficiency","Region","Ashanti",-40.0448285444167,2.77225440205604,0
-"5",2,"Technical efficiency","Region","Brong Ahafo",-29.2071318305905,4.33549714229483,0
-"8",2,"Technical efficiency","Region","Western",-33.5012208742222,3.25545063734174,0
-"11",2,"Technical efficiency","Region","Central",-23.6040168069383,5.00713230173057,1e-05
-"14",2,"Technical efficiency","Region","Greater Accra",-14.1105944145316,5.79281685292255,0.01663
-"17",2,"Technical efficiency","Region","Volta",-28.1045724320456,4.73720258672067,0
-"20",2,"Technical efficiency","Region","Eastern",-23.8322826887724,4.42335603914849,0
-"23",2,"Technical efficiency","Region","Upper East",18.896637453606,0.110539891562271,0
-"26",2,"Technical efficiency","Region","Upper West",19.4711139823514,0.157923826276339,0
-"29",2,"Technical efficiency","Region","Northern",24.2027391399516,0.339267464878918,0
-"1",2,"Meta-technical-efficiency","Region","Ashanti",-25.4579748615776,0.61977356055366,0
-"4",2,"Meta-technical-efficiency","Region","Brong Ahafo",-18.1134233631822,1.63139421038531,0
-"7",2,"Meta-technical-efficiency","Region","Western",-16.4917790531251,0.988233897432564,0
-"10",2,"Meta-technical-efficiency","Region","Central",-13.1215942666661,1.64339883028921,0
-"13",2,"Meta-technical-efficiency","Region","Greater Accra",-13.004601511215,1.22848057428638,0
-"16",2,"Meta-technical-efficiency","Region","Volta",-12.722648025368,2.64101810333851,1e-05
-"19",2,"Meta-technical-efficiency","Region","Eastern",-11.5632018105946,0.839179864866055,0
-"22",2,"Meta-technical-efficiency","Region","Upper East",18.7882683625281,0.109854662932137,0
-"25",2,"Meta-technical-efficiency","Region","Upper West",19.3446283470932,0.166488745871061,0
-"28",2,"Meta-technical-efficiency","Region","Northern",24.1754205438678,0.338224003672042,0
+"3",2,"Technology gap ratio","Region","Ashanti",22.8158548906953,8.16289744621234,0.00622
+"6",2,"Technology gap ratio","Region","Brong Ahafo",12.5104064668346,6.52466725804442,0.05804
+"9",2,"Technology gap ratio","Region","Western",30.6842504017046,8.21208015231755,0.00031
+"12",2,"Technology gap ratio","Region","Central",15.0982833916066,6.84336228491084,0.02965
+"15",2,"Technology gap ratio","Region","Greater Accra",4.39509719304308,7.4996256138854,0.55917
+"18",2,"Technology gap ratio","Region","Volta",18.4087321594865,6.77382451037395,0.00775
+"21",2,"Technology gap ratio","Region","Eastern",16.0757815490078,7.41368016281565,0.0325
+"24",2,"Technology gap ratio","Region","Upper East",-0.097885782549992,0.0235010368618083,7e-05
+"27",2,"Technology gap ratio","Region","Upper West",-0.0554705576435492,0.0132114043854992,6e-05
+"30",2,"Technology gap ratio","Region","Northern",-0.00466942953674111,0.00366014779305872,0.205
+"2",2,"Technical efficiency","Region","Ashanti",-40.0448285444155,2.77225442102413,0
+"5",2,"Technical efficiency","Region","Brong Ahafo",-29.2071318305892,4.33549718483323,0
+"8",2,"Technical efficiency","Region","Western",-33.5012208742215,3.25545064691694,0
+"11",2,"Technical efficiency","Region","Central",-23.6040168069379,5.00713228467724,1e-05
+"14",2,"Technical efficiency","Region","Greater Accra",-14.1105944145317,5.7928167728262,0.01663
+"17",2,"Technical efficiency","Region","Volta",-28.1045724320451,4.73720261221061,0
+"20",2,"Technical efficiency","Region","Eastern",-23.8322826887719,4.42335603796016,0
+"23",2,"Technical efficiency","Region","Upper East",18.8966374536067,0.11053929756278,0
+"26",2,"Technical efficiency","Region","Upper West",19.4711139823526,0.157923862110432,0
+"29",2,"Technical efficiency","Region","Northern",24.2027391399532,0.339267487239303,0
+"1",2,"Meta-technical-efficiency","Region","Ashanti",-25.4579748589893,0.619774088509384,0
+"4",2,"Meta-technical-efficiency","Region","Brong Ahafo",-18.1134233633662,1.63139358393553,0
+"7",2,"Meta-technical-efficiency","Region","Western",-16.4917790489157,0.988234093256482,0
+"10",2,"Meta-technical-efficiency","Region","Central",-13.1215942638375,1.64340010358108,0
+"13",2,"Meta-technical-efficiency","Region","Greater Accra",-13.004601509973,1.22848555040501,0
+"16",2,"Meta-technical-efficiency","Region","Volta",-12.7226480235444,2.64101808762737,1e-05
+"19",2,"Meta-technical-efficiency","Region","Eastern",-11.5632018096713,0.839179822579321,0
+"22",2,"Meta-technical-efficiency","Region","Upper East",18.7882683631937,0.109853554998187,0
+"25",2,"Meta-technical-efficiency","Region","Upper West",19.3446283495732,0.166486431959933,0
+"28",2,"Meta-technical-efficiency","Region","Northern",24.1754205430348,0.338224094022619,0
