@@ -29,25 +29,22 @@ keep if _merge==3 // Keep only the matched records
 // Decode the 'Locality' variable to create a new variable 'Localityx'
 decode Locality, gen(Localityx)
 
-// Generate summary statistics for specified variables by the 'Surveyx' grouping variable
-tabstat Credit LoanAmt Bank_Info Banked Insured InstTyp_* AccTyp_* PrdTyp_* YerEdu AgeYr Head, by(Surveyx)
-
 // Principal component analysis (PCA)
-loc Person FinWorker YerEdu HHFinWorker // Variables related to the person
+loc Person YerEdu FinWorker HHFinWorker // Variables related to the person
 loc Insured Insured_*   // Variables related to insurance
-loc Banked Banked       // Variables related to banking
-loc InstTyp InstTyp_*   // Variables related to types of financial institutions
-loc AccTyp AccTyp_*     // Variables related to types of accounts
-loc PrdTyp PrdTyp_*     // Variables related to types of transaction products
-loc Loan Credit LoanAmt // Variables related to loans
+loc Banked Banked       // Variables related to having a bank acc  
 loc Community BankKm RoadKm TrnprtKm  // Variables related to the community
 
 // Combine all the above variables into a single local macro 'Factors'
-loc Factors `Person' `Insured' `Banked' `InstTyp' `AccTyp' `PrdTyp' `Loan' `Community'
+loc Factors `Person' `Insured' `Banked' `Community'
 
 // Drop observations where any of the 'Factors' variables are missing
-for var `Person' `Insured' `Banked' `InstTyp' `AccTyp' `PrdTyp' `Loan' `Community': drop if X==.
-sum HhId `Person' `Insured' `Banked' `InstTyp' `AccTyp' `PrdTyp' `Loan' `Community'
+for var `Person' `Insured' `Banked' `Community': drop if X==.
+
+// Generate summary statistics for specified variables by the 'Surveyx' grouping variable
+sum HhId `Factors'
+
+tabstat HhId `Factors', by(Surveyx)
 
 // Perform PCA on the 'Factors' variables
 pca `Factors', vce(nor) com(1)
@@ -127,15 +124,13 @@ keep HhId EaId Mid Surveyx FinIdx FinIdxSi FinIdxCat
 // Merge the current data with the harmonized financial inclusion data on specified keys
 merge 1:1 Surveyx EaId HhId Mid using "$GitHub\GH-Agric-Productivity-Lab\datasets\harmonized_financial_inclusion_data"
 keep if _merge==3 // Keep only the matched records
-rename Credit CreditCat // Rename the 'Credit' variable to 'CreditCat'
 drop _merge // Drop the '_merge' variable
 
 // Merge the current data with the harmonized crop farmer data on specified keys
 merge 1:m Surveyx EaId HhId Mid using "$GitHub\GH-Agric-Productivity-Lab\datasets\harmonized_crop_farmer_data"
 keep if _merge==3 // Keep only the matched records
-drop _merge // Drop the '_merge' variable
+drop _merge Credit // Drop the '_merge' variable
 
-replace Credit = LoanAmt > 0
 // Compress the data to save space
 compress
 

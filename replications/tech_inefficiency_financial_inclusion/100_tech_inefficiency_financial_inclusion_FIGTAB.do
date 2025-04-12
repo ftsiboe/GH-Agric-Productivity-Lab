@@ -217,19 +217,17 @@ mat drop _all
 sca drop _all
 use "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_financial_inclusion\data\tech_inefficiency_financial_inclusion_data",clear
 tab FinIdxCat,gen(FinIdxCatx)
-tab CreditCat,gen(CreditCatx)
 decode CropID,gen(CropIDx)
 unab Person: FinWorker YerEdu HHFinWorker // Variables related to the person
 unab Insured: Insured_*   // Variables related to insurance
-unab Banked: Banked       // Variables related to banking
+unab Banked: Banked Bank_Info_* NonBanked_Why_* // Variables related to banking
 unab InstTyp: InstTyp_*   // Variables related to types of financial institutions
 unab AccTyp: AccTyp_*     // Variables related to types of accounts
-unab PrdTyp: PrdTyp_* CreditCatx*    // Variables related to types of transaction products
-unab Loan: Credit  // Variables related to loans
+unab PrdTyp: PrdTyp_*   // Variables related to types of transaction products
 unab Community: BankKm RoadKm TrnprtKm  // Variables related to the community
 
 // Combine all the above variables into a single local macro 'Factors'
-loc Factors credit_self `Insured' `Banked' `InstTyp' `AccTyp' `PrdTyp' `Loan' `Community' FinIdxCatx* 
+loc Factors credit_self `Insured' `Banked' `InstTyp' `AccTyp' `PrdTyp' `Community' FinIdxCatx* 
 
 tabstat `Factors' if CropIDx == "Pooled",by(Surveyx) save
 keep if CropIDx == "Pooled"
@@ -238,7 +236,7 @@ gen Trend=Season-r(min)
 egen Clust = group(Survey Ecozon EaId HhId)
 mat Means=J(1,8,.)
 
-qui foreach Var in FinIdx FinIdxSi LoanAmt `Person'{
+qui foreach Var in FinIdx FinIdxSi `Person'{
 	qui levelsof CropIDx, local(levels)
 	qui foreach crop in `levels'{
 		preserve
@@ -275,7 +273,7 @@ qui foreach Var in FinIdx FinIdxSi LoanAmt `Person'{
 mat li Means
 
 
-qui foreach Var in `Factors' {
+qui foreach Var in `Factors' Applied {
 	qui levelsof CropIDx, local(levels)
 	qui foreach crop in `levels'{
 		preserve
@@ -284,6 +282,217 @@ qui foreach Var in `Factors' {
 			*loc Var InstTyp_Momo
 			*loc crop "Pooled"
 			keep if CropIDx == "`crop'"
+			
+			mat A = J(1,8,.)
+			tab Survey if `Var' == 1
+			if(`r(r)' > 1){
+				*Overall and regional means 
+				qui logit `Var' i.Survey, vce(cluster Clust) 
+				margins Survey, grand coefl post
+				nlcom ("Trend":(_b[6bn.Survey]-_b[7.Survey])*100), post
+				qui ereturn display
+				mat A = r(table)'
+				mat A = A[1...,1..8]  
+			}
+		
+			tabstat `Var' , stat(mean sem min max sd n) by(Surveyx) save
+			foreach mt in Stat1 Stat2 StatTotal{
+				mat B = r(`mt')'
+				mat B = B[1...,1],B[1...,2],J(rowsof(B),1,.),J(rowsof(B),1,.),B[1...,3],B[1...,4],B[1...,5],B[1...,6]
+				mat A =A\B
+				mat drop B
+			}
+
+			mat rownames A = "`crop'_Trend" "`crop'_GLSS6" "`crop'_GLSS7" "`crop'_GLSS0"
+			mat roweq A= `Var'
+			mat Means = A\Means	
+			mat drop A
+		}
+		restore
+	}
+}
+
+mat li Means
+
+qui foreach Var in Refused Accept Proces{
+	qui levelsof CropIDx, local(levels)
+	qui foreach crop in `levels'{
+		preserve
+		cap{
+			
+			*loc Var InstTyp_Momo
+			*loc crop "Pooled"
+			keep if CropIDx == "`crop'"
+			keep if Applied == 1
+			
+			mat A = J(1,8,.)
+			tab Survey if `Var' == 1
+			if(`r(r)' > 1){
+				*Overall and regional means 
+				qui logit `Var' i.Survey, vce(cluster Clust) 
+				margins Survey, grand coefl post
+				nlcom ("Trend":(_b[6bn.Survey]-_b[7.Survey])*100), post
+				qui ereturn display
+				mat A = r(table)'
+				mat A = A[1...,1..8]  
+			}
+		
+			tabstat `Var' , stat(mean sem min max sd n) by(Surveyx) save
+			foreach mt in Stat1 Stat2 StatTotal{
+				mat B = r(`mt')'
+				mat B = B[1...,1],B[1...,2],J(rowsof(B),1,.),J(rowsof(B),1,.),B[1...,3],B[1...,4],B[1...,5],B[1...,6]
+				mat A =A\B
+				mat drop B
+			}
+
+			mat rownames A = "`crop'_Trend" "`crop'_GLSS6" "`crop'_GLSS7" "`crop'_GLSS0"
+			mat roweq A= `Var'
+			mat Means = A\Means	
+			mat drop A
+		}
+		restore
+	}
+}
+
+mat li Means
+
+unab loaners: Source_* Collateral_* Use_*
+
+qui foreach Var in `loaners'  {
+	qui levelsof CropIDx, local(levels)
+	qui foreach crop in `levels'{
+		preserve
+		cap{
+			
+			*loc Var InstTyp_Momo
+			*loc crop "Pooled"
+			keep if CropIDx == "`crop'"
+			keep if Applied*Accept == 1
+			
+			mat A = J(1,8,.)
+			tab Survey if `Var' == 1
+			if(`r(r)' > 1){
+				*Overall and regional means 
+				qui logit `Var' i.Survey, vce(cluster Clust) 
+				margins Survey, grand coefl post
+				nlcom ("Trend":(_b[6bn.Survey]-_b[7.Survey])*100), post
+				qui ereturn display
+				mat A = r(table)'
+				mat A = A[1...,1..8]  
+			}
+		
+			tabstat `Var' , stat(mean sem min max sd n) by(Surveyx) save
+			foreach mt in Stat1 Stat2 StatTotal{
+				mat B = r(`mt')'
+				mat B = B[1...,1],B[1...,2],J(rowsof(B),1,.),J(rowsof(B),1,.),B[1...,3],B[1...,4],B[1...,5],B[1...,6]
+				mat A =A\B
+				mat drop B
+			}
+
+			mat rownames A = "`crop'_Trend" "`crop'_GLSS6" "`crop'_GLSS7" "`crop'_GLSS0"
+			mat roweq A= `Var'
+			mat Means = A\Means	
+			mat drop A
+		}
+		restore
+	}
+}
+
+mat li Means
+
+qui foreach Var in LoanAmt RePaid{
+	qui levelsof CropIDx, local(levels)
+	qui foreach crop in `levels'{
+		preserve
+		cap{
+			
+			*loc Var LoanAmt
+			*loc crop "Pooled"
+			keep if CropIDx == "`crop'"
+			keep if Applied*Accept == 1
+			*sum `Var' Trend
+			*Overall and regional means 
+			qui reg `Var' Trend, vce(cluster Clust) 
+			margins, eydx(Trend) grand coefl post
+			qui ereturn display
+			mat A = r(table)'
+			mat A = A[1...,1..8]  
+		
+			tabstat `Var' , stat(mean sem min max sd n) by(Surveyx) save
+			foreach mt in Stat1 Stat2 StatTotal{
+				mat B = r(`mt')'
+				mat B = B[1...,1],B[1...,2],J(rowsof(B),1,.),J(rowsof(B),1,.),B[1...,3],B[1...,4],B[1...,5],B[1...,6]
+				mat A =A\B
+				mat drop B
+			}
+
+			mat rownames A = "`crop'_Trend" "`crop'_GLSS6" "`crop'_GLSS7" "`crop'_GLSS0"
+			mat roweq A= `Var'
+			mat Means = A\Means	
+			mat drop A
+		}
+		restore
+	}
+}
+
+mat li Means
+
+unab loaners: Refusal_*
+
+qui foreach Var in `loaners' {
+	qui levelsof CropIDx, local(levels)
+	qui foreach crop in `levels'{
+		preserve
+		cap{
+			
+			*loc Var InstTyp_Momo
+			*loc crop "Pooled"
+			keep if CropIDx == "`crop'"
+			keep if Applied*Refused == 1
+			
+			mat A = J(1,8,.)
+			tab Survey if `Var' == 1
+			if(`r(r)' > 1){
+				*Overall and regional means 
+				qui logit `Var' i.Survey, vce(cluster Clust) 
+				margins Survey, grand coefl post
+				nlcom ("Trend":(_b[6bn.Survey]-_b[7.Survey])*100), post
+				qui ereturn display
+				mat A = r(table)'
+				mat A = A[1...,1..8]  
+			}
+		
+			tabstat `Var' , stat(mean sem min max sd n) by(Surveyx) save
+			foreach mt in Stat1 Stat2 StatTotal{
+				mat B = r(`mt')'
+				mat B = B[1...,1],B[1...,2],J(rowsof(B),1,.),J(rowsof(B),1,.),B[1...,3],B[1...,4],B[1...,5],B[1...,6]
+				mat A =A\B
+				mat drop B
+			}
+
+			mat rownames A = "`crop'_Trend" "`crop'_GLSS6" "`crop'_GLSS7" "`crop'_GLSS0"
+			mat roweq A= `Var'
+			mat Means = A\Means	
+			mat drop A
+		}
+		restore
+	}
+}
+
+mat li Means
+
+unab loaners: WhyNoLoan_*
+
+qui foreach Var in `loaners' {
+	qui levelsof CropIDx, local(levels)
+	qui foreach crop in `levels'{
+		preserve
+		cap{
+			
+			*loc Var InstTyp_Momo
+			*loc crop "Pooled"
+			keep if CropIDx == "`crop'"
+			keep if Applied == 0
 			
 			mat A = J(1,8,.)
 			tab Survey if `Var' == 1
