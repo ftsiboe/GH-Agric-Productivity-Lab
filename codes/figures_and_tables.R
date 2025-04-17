@@ -96,6 +96,8 @@ tab_main_specification <- function(res_list = list.files("results/estimations/",
             # Combine results and save
             res <- rbind(ef_mean, el_mean, sf_estm)
             res <- res[c("TCH", "FXN", "DIS", "estm_type", "Survey", "CoefName", "sample", "restrict", "level_type", "Tech", "Estimate", "Estimate.sd", "jack_pv")]
+            res <- res[res$sample %in% c(mspecs_optimal$name,"unmatched"),]
+            res <- res[res$restrict %in% c("Restricted"),]
             saveRDS(res, file = paste0("results/figuresData/main_specification.rds"))
             return(res)
           }, error = function(e) {
