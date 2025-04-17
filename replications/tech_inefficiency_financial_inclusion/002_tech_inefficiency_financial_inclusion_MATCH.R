@@ -32,9 +32,8 @@ Arealist <- Arealist[Arealist%in% paste0("Area_",c("Beans","Cassava","Cocoa","Co
                                                    "Pepper","Plantain","Rice","Sorghum","Tomatoe","Yam"))]
 
 Emch <- c("Survey","Region","Ecozon","Locality","Female")
-Scle <- c("AgeYr","YerEdu","HHSizeAE","FmleAERt","Depend","CrpMix",Arealist,"HHFinWorker","BankKm","RoadKm","TrnprtKm" )
-Fixd <- c("OwnLnd","Ethnic","Marital","Religion","Head","Insured","Banked","FinWorker",names(DATA)[grepl("InstTyp_",names(DATA))],
-          names(DATA)[grepl("AccTyp_",names(DATA))],names(DATA)[grepl("PrdTyp_",names(DATA))])
+Scle <- c("AgeYr","YerEdu","HHSizeAE","FmleAERt","Depend","CrpMix",Arealist,"FinIdxSi")
+Fixd <- c("OwnLnd","Ethnic","Marital","Religion","Head")
 
 Emch.formula  <- paste0(paste0("factor(",Emch,")"),collapse = "+")
 Match.formula <- paste0("Treat~",paste0(c(Scle),collapse = "+"))

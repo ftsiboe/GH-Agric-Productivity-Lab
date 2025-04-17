@@ -73,6 +73,7 @@ function(){
   
   # Exclude specifications with 'CropID' if the level is not "Pooled"
   SPECS <- SPECS[!(SPECS$disasg %in% c("CropID") & !SPECS$level %in% "Pooled"),]
+  SPECS <- SPECS[!SPECS$disasg %in% c( "Female","Region","Ecozon","EduCat","EduLevel","AgeCat"),]
   
   # Remove SPECS that have already been estimated (i.e., their result files exist)
   SPECS <- SPECS[!(paste0(SPECS$disasg, "_", SPECS$level, "_", SPECS$TechVar, "_",
@@ -100,7 +101,7 @@ if(!is.na(as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID")))){
 lapply(
   c(1:nrow(SPECS)),
   function(fit){
-    # fit <- 1
+    # fit <- 2
     # Extract the current specification parameters
     f       <- SPECS$f[fit]
     d       <- SPECS$d[fit]
@@ -166,8 +167,37 @@ lapply(
       # Load the draw list which specifies sampling or bootstrap iterations
       drawlist <- readRDS("results/drawlist.rds")
       
-      # For the "fullset" specification, limit the draw list to IDs less than or equal to 50
-      if(nnm %in% "fullset") drawlist <- drawlist[drawlist$ID <= 50, ]
+      disagscors_list <- NULL
+      
+      if(TechVar %in% "credit_hh" &  nnm %in% "optimal" & level %in% "Pooled" & disasg %in% "CropID" & f %in% 2 & d %in% 1){
+        # Limit the draw list to IDs less than or equal to 50
+        # drawlist <- drawlist[drawlist$ID <= 50, ]
+        
+        disagscors_list <- c("Ecozon","Region","AgeCat","EduLevel","Female",
+                             "Applied","Refused","Accept","Proces","FinIdxCat",
+                             "Insured","Banked",names(data)[grepl("CROP_",names(data))])
+        
+        for(ddx in c(
+          names(data)[grepl("InstTyp_",names(data))],
+          names(data)[grepl("AccTyp_",names(data))],
+          names(data)[grepl("PrdTyp_",names(data))],
+          names(data)[grepl("Source_",names(data))],
+          names(data)[grepl("Collateral_",names(data))],
+          names(data)[grepl("Use_",names(data))],
+          names(data)[grepl("Refusal_",names(data))],
+          names(data)[grepl("Insured_",names(data))],
+          names(data)[grepl("Bank_Info_",names(data))],
+          names(data)[grepl("NonBanked_Why_",names(data))])){
+          if(round(mean(data[,ddx],na.rm=T),2) >= 0.05){ 
+            disagscors_list <- c(disagscors_list,ddx)
+          }
+        }
+        # disagscors_list
+        
+        disagscors_list <- unique(disagscors_list[disagscors_list %in% names(data)])
+      }
+      
+      time_beg <- Sys.time()
       
       # Run the estimations using the function 'Fxn_draw_estimations'
       res <- lapply(
@@ -185,15 +215,13 @@ lapply(
         ulistM            = list(Svarlist = c("lnAgeYr", "lnYerEdu", "CrpMix"),
                                  Fvarlist = c("Female", "Survey", "Ecozon", "Extension", "EqipMech", "OwnLnd")),
         UID               = c("UID", "Survey", "CropID", "HhId", "EaId", "Mid"),
-        disagscors_list   = c("Ecozon","Region","AgeCat","EduLevel","Female",names(data)[grepl("CROP_",names(data))],
-                              "Insured","Banked","FinWorker",names(data)[grepl("InstTyp_",names(data))],
-                              names(data)[grepl("AccTyp_",names(data))],names(data)[grepl("PrdTyp_",names(data))]),
+        disagscors_list   = disagscors_list,
         f                 = f,
         d                 = d,
         tvar              = TechVar,
         nnm               = nnm
       )
-      
+       
       # Summarize the estimation draws using a helper function
       res <- Fxn.draw_summary(res = res, TechKey = TechKey)
       
@@ -211,6 +239,8 @@ lapply(
         }, error = function(e){}
         )
       }
+      
+      time_end <- Sys.time()
       
       # Optional block: Print specific summaries for different estimation types (TE, TGR, MTE)
       function(){

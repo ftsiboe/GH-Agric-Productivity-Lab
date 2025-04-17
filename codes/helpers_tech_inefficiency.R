@@ -1659,9 +1659,17 @@ Fxn_draw_estimations <- function(
   
   DONE <- NULL
   tryCatch({ 
-    # draw <- 0
-    #print(draw)
-    
+    function(){
+      vlist=NULL;slope_shifter="NONE";TREND=FALSE;tvar= TechVar;draw=0;surveyy= F;wvar= "Weight";yvar= "HrvstKg"
+      intercept_shifters = list(Svarlist = ArealistX, Fvarlist = c("Survey", "Ecozon"))
+      intercept_shiftersM = list(Svarlist = NULL, Fvarlist = c("Survey", "Ecozon"))
+      xlist= c("Area", "SeedKg", "HHLaborAE", "HirdHr", "FertKg", "PestLt")
+      ulist= list(Svarlist = c("lnAgeYr", "lnYerEdu", "CrpMix"),
+                               Fvarlist = c("Female", "Survey", "Ecozon", "Extension", "EqipMech", "OwnLnd"))
+      ulistM= list(Svarlist = c("lnAgeYr", "lnYerEdu", "CrpMix"),
+                               Fvarlist = c("Female", "Survey", "Ecozon", "Extension", "EqipMech", "OwnLnd"))
+      UID= c("UID", "Survey", "CropID", "HhId", "EaId", "Mid")
+    }
     #---------------------------------------------
     # Data Preparation                         ####
     # Filter out rows based on drawlist
@@ -1723,10 +1731,12 @@ Fxn_draw_estimations <- function(
     if(!is.null(disagscors_list)) {
       disagscors <- as.data.frame(
         data.table::rbindlist(
-          future_lapply(
+          lapply(
             disagscors_list,
             function(disagscors_var, scors, data) {
               tryCatch({ 
+                # disagscors_var <- disagscors_list[1];scors <- res$ef_samp
+                #print(disagscors_var)
                 scors00 <- scors
                 scors00$Survey <- "GLSS0"
                 scors <- rbind(scors, scors00)
@@ -1734,12 +1744,13 @@ Fxn_draw_estimations <- function(
                 
                 disagscors <- scors %>% tidyr::gather(input, value, c("TE0", "TE", "TGR", "MTE"))
                 disagscors <- disagscors[!disagscors$value %in% c(NA, Inf, -Inf, NaN),]
-                disagscors <- disagscors[disagscors$estType %in% c("teJLMS", "teMO", "teBC", "teFTu", "teFTm"),]
+                disagscors <- disagscors[disagscors$estType %in% "teBC",]
                 
                 disagscors <- dplyr::inner_join(disagscors, data[c("UID", "Survey", "CropID", "HhId", "EaId", "Mid", disagscors_var)],
                                                 by=c("UID", "Survey", "CropID", "HhId", "EaId", "Mid"))
                 disagscors$disagscors_level <- disagscors[, disagscors_var]
                 disagscors <- disagscors[!disagscors$disagscors_level %in% c(NA, Inf, -Inf, NaN),]
+                disagscors$disagscors_level <- as.character(disagscors$disagscors_level)
                 
                 disagscors0 <- disagscors[disagscors$input %in% "TE0",]
                 disagscors0$Tech <- -999
