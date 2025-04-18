@@ -188,7 +188,7 @@ lapply(
           names(data)[grepl("Insured_",names(data))],
           names(data)[grepl("Bank_Info_",names(data))],
           names(data)[grepl("NonBanked_Why_",names(data))])){
-          if(round(mean(data[,ddx],na.rm=T),2) >= 0.05){ 
+          if(round(mean(data[,ddx],na.rm=T),2) >= 0.03){ 
             disagscors_list <- c(disagscors_list,ddx)
           }
         }

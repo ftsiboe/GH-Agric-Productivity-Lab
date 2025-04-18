@@ -48,9 +48,8 @@ Arealist <- Arealist[Arealist %in% paste0("Area_",c("Beans","Cassava","Cocoa","C
                                                     "Pepper","Plantain","Rice","Sorghum","Tomatoe","Yam"))]
 
 Emch <- c("Survey","Region","Ecozon","Locality","Female")
-Scle <- c("AgeYr","YerEdu","HHSizeAE","FmleAERt","Depend","CrpMix",Arealist,"HHFinWorker","BankKm","RoadKm","TrnprtKm" )
-Fixd <- c("OwnLnd","Ethnic","Marital","Religion","Head","Insured","Banked","FinWorker",names(DATA)[grepl("InstTyp_",names(DATA))],
-          names(DATA)[grepl("AccTyp_",names(DATA))],names(DATA)[grepl("PrdTyp_",names(DATA))])
+Scle <- c("AgeYr","YerEdu","HHSizeAE","FmleAERt","Depend","CrpMix",Arealist,"FinIdxSi")
+Fixd <- c("OwnLnd","Ethnic","Marital","Religion","Head")
 
 # Filter the dataset for complete cases based on selected variables
 DATA <- DATA[complete.cases(DATA[c("Surveyx","EaId","HhId","Mid","UID","Weight","Treat",Emch,Scle,Fixd)]),]

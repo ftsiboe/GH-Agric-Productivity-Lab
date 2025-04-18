@@ -14,9 +14,6 @@ Keep.List<-c("Keep.List",ls())
 # Main Specification   
 rm(list= ls()[!(ls() %in% c(Keep.List))])
 res <- tab_main_specification()
-
-res$sample <- ifelse(res$sample %in% mspecs_optimal$name,"matched",res$sample)
-
 wb <- openxlsx::loadWorkbook("results/tech_inefficiency_financial_inclusion_results.xlsx")
 openxlsx::writeData(wb, sheet = "msf",res , colNames = T, startCol = "A", startRow = 1)
 openxlsx::saveWorkbook(wb,"results/tech_inefficiency_financial_inclusion_results.xlsx",overwrite = T)
@@ -137,14 +134,10 @@ res$disasg <- ifelse(grepl("Collateral_",res$disasg),"Guarantee/collateral",res$
 res$disasg <- ifelse(grepl("Refusal_",res$disasg),"Reson for refusal",res$disasg)
 res$disasg <- ifelse(grepl("WhyNoLoan_",res$disasg),"Reason for not aplying a loan",res$disasg)
 
-res <- res[c("disasg","level","input","Estimate","Estimate.sd","jack_pv")]
-wb <- openxlsx::loadWorkbook("results/tech_inefficiency_financial_inclusion_results.xlsx")
-openxlsx::writeData(wb, sheet = "msf",res , colNames = T, startCol = "A", startRow = 1)
-openxlsx::saveWorkbook(wb,"results/tech_inefficiency_financial_inclusion_results.xlsx",overwrite = T)
-
-
-
-
+# res <- res[c("disasg","level","input","Estimate","Estimate.sd","jack_pv")]
+# wb <- openxlsx::loadWorkbook("results/tech_inefficiency_financial_inclusion_results.xlsx")
+# openxlsx::writeData(wb, sheet = "msf",res , colNames = T, startCol = "A", startRow = 1)
+# openxlsx::saveWorkbook(wb,"results/tech_inefficiency_financial_inclusion_results.xlsx",overwrite = T)
 
 
 # Fig - Robustness              
