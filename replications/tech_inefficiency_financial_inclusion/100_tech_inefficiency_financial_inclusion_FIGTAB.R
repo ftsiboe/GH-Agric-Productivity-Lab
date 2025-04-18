@@ -43,7 +43,7 @@ data$x <- factor(as.numeric(as.character(data$level)),levels = 1:5,
                                          "Low\n(20–40%)",
                                          "Medium\n(40–60%)",
                                          "High\n(60–80%%)",
-                                         "Very\nhigh (Top 20%)"))
+                                         "Very high\n(Top 20%)"))
 data$input <- factor(data$input, levels = c("TGR","TE","MTE"), labels = c("Technology gap ratio", "Technical efficiency", "Meta-technical-efficiency"))
 
 fig <- ggplot(data = data, aes(x = x, y = Estimate, group = input, shape = input, colour = input, fill = input)) +
@@ -134,10 +134,10 @@ res$disasg <- ifelse(grepl("Collateral_",res$disasg),"Guarantee/collateral",res$
 res$disasg <- ifelse(grepl("Refusal_",res$disasg),"Reson for refusal",res$disasg)
 res$disasg <- ifelse(grepl("WhyNoLoan_",res$disasg),"Reason for not aplying a loan",res$disasg)
 
-# res <- res[c("disasg","level","input","Estimate","Estimate.sd","jack_pv")]
-# wb <- openxlsx::loadWorkbook("results/tech_inefficiency_financial_inclusion_results.xlsx")
-# openxlsx::writeData(wb, sheet = "msf",res , colNames = T, startCol = "A", startRow = 1)
-# openxlsx::saveWorkbook(wb,"results/tech_inefficiency_financial_inclusion_results.xlsx",overwrite = T)
+res <- res[c("disasg","level","input","Estimate","Estimate.sd","jack_pv")]
+wb <- openxlsx::loadWorkbook("results/tech_inefficiency_financial_inclusion_results.xlsx")
+openxlsx::writeData(wb, sheet = "effects_by_inclusion",res , colNames = T, startCol = "A", startRow = 1)
+openxlsx::saveWorkbook(wb,"results/tech_inefficiency_financial_inclusion_results.xlsx",overwrite = T)
 
 
 # Fig - Robustness              
