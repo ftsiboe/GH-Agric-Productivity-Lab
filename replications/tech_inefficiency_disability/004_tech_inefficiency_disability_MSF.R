@@ -87,7 +87,13 @@ lapply(
       # draw estimations
       drawlist = readRDS("results/drawlist.rds")
       
-      if(nnm %in% "fullset") drawlist <- drawlist[drawlist$ID<=50,]
+      disagscors_list <- NULL
+      
+      if(TechVar %in% "credit_hh" &  nnm %in% "optimal" & level %in% "Pooled" & disasg %in% "CropID" & f %in% 2 & d %in% 1){
+        
+        disagscors_list <- c("Ecozon","Region","AgeCat","EduLevel","Female","disability",names(data)[grepl("CROP_",names(data))])
+
+      }
       
       res <- lapply(
         unique(drawlist$ID),Fxn_draw_estimations,
@@ -102,7 +108,7 @@ lapply(
         ulist = list(Svarlist=c("lnAgeYr","lnYerEdu","CrpMix"),Fvarlist=c("Female","Survey","Ecozon","Extension","Credit","EqipMech","OwnLnd")),
         ulistM= list(Svarlist=c("lnAgeYr","lnYerEdu","CrpMix"),Fvarlist=c("Female","Survey","Ecozon","Extension","Credit","EqipMech","OwnLnd")),
         UID   = c("UID", "Survey", "CropID", "HhId", "EaId", "Mid"),
-        disagscors_list = c("Ecozon","Region","AgeCat","EduLevel","Female",names(data)[grepl("CROP_",names(data))]),
+        disagscors_list = disagscors_list,
         f     = f,
         d     = d,
         tvar  = TechVar,

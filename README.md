@@ -37,7 +37,7 @@ The project utilizes farm-level data from the Ghana Living Standards Surveys (GL
 ## 📅 Scheduled Studies
 * The link between extension services and Farm Technology Endowment and its Efficient Use | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_extension)
 * Is Land Tenure Security a Catalyst for Farm Technology Endowment and its Efficient Use | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_land_tenure)
-* Non-Farm Household Enterprise driven disparities in Farm Technology Endowment and its Efficient Use | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_offfarm_work)
+* Non-Farm Household Enterprise driven disparities in Farm Technology Endowment and its Efficient Use | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_nonfarm_enterprise)
 
   
 ## 🔓 Data and Code Availability

@@ -44,7 +44,7 @@ fig_robustness(y_title="\nDifference (%) [Disabled less non-Disabled]",
 
 # Fig - Matching TE      
 rm(list= ls()[!(ls() %in% c(Keep.List))])
-fig_input_te(y_title="\nEducation gap (%)",tech_lable=c("Full sample", "Disabled sample", "non-Disabled sample"))
+fig_input_te(y_title="\nDisability gap (%)",tech_lable=c("Full sample", "Disabled sample", "non-Disabled sample"))
 
 # Fig - Covariate balance 
 rm(list= ls()[!(ls() %in% c(Keep.List))])
