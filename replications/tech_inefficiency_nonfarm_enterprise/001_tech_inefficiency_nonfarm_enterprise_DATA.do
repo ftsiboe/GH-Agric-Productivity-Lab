@@ -1,5 +1,4 @@
 use "$GitHub\GH-Agric-Productivity-Lab\datasets\harmonized_nonfarm_enterprise_data",clear
-collapse (max) nonfarm_* (mean) INC_* ,by(Surveyx EaId HhId Mid)
 merg 1:m Surveyx EaId HhId Mid using "$GitHub\GH-Agric-Productivity-Lab\datasets\harmonized_crop_farmer_data"
 keep if _merge==3
 drop _merge Lnd* EduWhyNo RentHa
