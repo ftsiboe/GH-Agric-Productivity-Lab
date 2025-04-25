@@ -60,7 +60,7 @@ summary(DATA[c(Emch,Scle,Fixd)])
 m.specs <- readRDS("results/mspecs.rds")
 
 # Check if the script is run within a SLURM job and perform calculations accordingly
-if(Sys.getenv("SLURM_JOB_NAME") %in% c("te_all","te_fin")){
+if(Sys.getenv("SLURM_JOB_NAME") %in% c("te_all","te_nonfrm")){
   if(!is.na(as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID")))){
     m.specs <- m.specs[as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID")),]
   }

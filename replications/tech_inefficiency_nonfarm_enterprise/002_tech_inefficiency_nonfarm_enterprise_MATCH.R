@@ -57,7 +57,7 @@ if(!is.na(as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID")))){
   m.specs <- m.specs[as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID")),]
 }
 
-if(Sys.getenv("SLURM_JOB_NAME") %in% c("match_all","match_fin")){
+if(Sys.getenv("SLURM_JOB_NAME") %in% c("match_all","match_nonfrm")){
   lapply(
     1:nrow(m.specs), #
     function(i,DATA){
