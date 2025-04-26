@@ -199,3 +199,84 @@ export excel CropIDx Equ Coef Beta SE Tv Pv Min Max SD N /*
 */ using "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_land_tenure\results\tech_inefficiency_land_tenure_results.xlsx", /*
 */ sheet("Means") sheetmodify firstrow(variables) 
 
+
+
+mat drop _all
+sca drop _all
+use "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_land_tenure\data\tech_inefficiency_land_tenure_data",clear
+decode CropID,gen(CropIDx)
+keep if inlist(Surveyx,"GLSS6","GLSS7")
+for var LndOwn LndRgt LndAq ShrCrpCat:tab X,gen(X_)
+tabstat LndOwn_* LndRgt_* LndAq_* ShrCrpCat_* if CropIDx == "Pooled",by(Surveyx) save
+
+gen Trend=Season-r(min)
+egen Clust = group(Survey Ecozon EaId HhId)
+mat Means=J(1,8,.)
+qui foreach Var in OwnLnd LndOwn_1 LndOwn_2 LndOwn_3 LndRgt_1 LndRgt_2 LndRgt_3 LndRgt_4 LndAq_1 LndAq_2 LndAq_3 LndAq_4 LndAq_5 ShrCrpCat_1 ShrCrpCat_2 ShrCrpCat_3 {
+	qui levelsof CropIDx, local(levels)
+	qui foreach crop in `levels'{
+		preserve
+		cap{
+			*di "*********`Var' in `crop'"
+			*loc Var LndOwn_1
+			*loc crop "Pooled"
+			keep if CropIDx == "`crop'"
+			
+			*Overall and regional means 
+			qui logit `Var' i.Survey, vce(cluster Clust) 
+			margins Survey, grand coefl post
+			nlcom ("Trend":(_b[6bn.Survey]-_b[7.Survey])*100), post
+			qui ereturn display
+			mat A = r(table)'
+			mat A = A[1...,1..8]
+			tabstat `Var' , stat(mean sem min max sd n) by(Surveyx) save
+			foreach mt in Stat1 Stat2 StatTotal{
+				mat B = r(`mt')'
+				mat B = B[1...,1],B[1...,2],J(rowsof(B),1,.),J(rowsof(B),1,.),B[1...,3],B[1...,4],B[1...,5],B[1...,6]
+				mat A =A\B
+				mat drop B
+			}
+
+			mat rownames A = "`crop'_Trend" "`crop'_GLSS6" "`crop'_GLSS7" "`crop'_GLSS0"
+			mat roweq A= `Var'
+			mat Means = A\Means	
+			mat drop A
+		}
+		restore
+	}
+}
+
+mat li Means
+
+mat colnames Means = Beta SE Tv Pv Min Max SD N
+
+qui clear
+qui svmat Means, names(col)
+qui gen Coef=""
+qui gen Variable=""
+local Coef : rownames Means
+local Variable  : roweq Means
+			
+qui forvalues i=1/`: word count `Coef'' {
+replace Coef =`"`: word `i' of `Coef''"' in `i'
+replace Variable  =`"`: word `i' of `Variable''"'  in `i'
+}
+
+split Coef, p("_") limit(2)
+ren (Coef1 Coef2) (crop mesure)
+keep Variable crop mesure Beta SE Tv Pv Min Max SD N
+order Variable crop mesure Beta SE Tv Pv Min Max SD N
+
+export excel Variable crop mesure Beta SE Tv Pv Min Max SD N /*
+*/ using "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_land_tenure\results\tech_inefficiency_land_tenure_results.xlsx", /*
+*/ sheet("land_tenure") sheetmodify firstrow(variables) 
+
+
+
+
+
+
+
+
+
+
