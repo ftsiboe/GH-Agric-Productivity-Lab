@@ -78,9 +78,8 @@ lapply(
       
       # draw estimations
       drawlist = readRDS("results/drawlist.rds")
-      if(nnm %in% "fullset"){
-        drawlist <- drawlist[drawlist$ID<=50,]
-      }
+      if(nnm %in% "fullset") drawlist <- drawlist[drawlist$ID<=50,]
+      
       res <- lapply(
         unique(drawlist$ID),Fxn_draw_estimations,
         data = data,

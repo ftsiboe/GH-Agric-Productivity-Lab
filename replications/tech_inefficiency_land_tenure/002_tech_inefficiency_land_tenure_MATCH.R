@@ -26,7 +26,6 @@ for(var in c(Fixd)){ Match.formula<-paste0(Match.formula,"+factor(",var,")")}
 DATA <- DATA[complete.cases(DATA[c("Surveyx","EaId","HhId","Mid","UID","Weight","Treat",Emch,Scle,Fixd)]),]
 summary(DATA[c(Emch,Scle,Fixd)])
 
-
 if(Sys.getenv("SLURM_JOB_NAME") %in% "drawlist"){
   m.specs <- Fxn_draw_spec(drawN=100,DATA=DATA,myseed=myseed)
   saveRDS(m.specs$m.specs,file="results/mspecs.rds")
