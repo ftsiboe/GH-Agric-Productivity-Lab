@@ -226,7 +226,7 @@ lapply(
                                names(FXNFORMS)[f], "_", names(DISTFORMS)[d], "_", nnm)
       
       # If using the full set, remove some components not needed for the output summary
-      if(nnm %in% "fullset"){
+      if(!(TechVar %in% "nonfarm_hh" & nnm %in% "optimal" & level %in% "Pooled" & disasg %in% "CropID" & f %in% 2 & d %in% 1)){
         res$rk_dist <- NULL
         res$rk_mean <- NULL
         res$rk_samp <- NULL

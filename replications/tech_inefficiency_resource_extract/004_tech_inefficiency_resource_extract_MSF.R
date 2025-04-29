@@ -139,7 +139,7 @@ lapply(
       
       res[["names"]] <- paste0(disasg,"_",level,"_",TechVar,"_",names(FXNFORMS)[f],"_",names(DISTFORMS)[d],"_",nnm)
       
-      if(nnm %in% "fullset"){
+      if(!(TechVar %in% "extraction_any" & nnm %in% "optimal" & level %in% "Pooled" & disasg %in% "CropID" & f %in% 2 & d %in% 1)){
         res$rk_dist <- NULL
         res$rk_mean <- NULL
         res$rk_samp <- NULL
