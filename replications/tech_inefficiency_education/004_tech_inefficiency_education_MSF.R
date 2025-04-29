@@ -90,7 +90,7 @@ lapply(
       # draw estimations
       drawlist = readRDS("results/drawlist.rds")
       
-      if(nnm %in% "fullset") drawlist <- drawlist[drawlist$ID<=50,]
+      #if(nnm %in% "fullset") drawlist <- drawlist[drawlist$ID<=50,]
       
       disagscors_list <- NULL
       if(paste0(disasg,"_",level,"_",TechVar,"_",names(FXNFORMS)[f],"_",names(DISTFORMS)[d],"_",nnm,".rds") %in% 
