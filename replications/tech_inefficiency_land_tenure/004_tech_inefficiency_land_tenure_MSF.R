@@ -25,11 +25,11 @@ function(){
   
   SPECS <- Fxn_SPECS(TechVarlist=c("LndOwn","OwnLnd","ShrCrpCat","LndRgt","LndAq"),  
                      mainD = mainD, mainF=mainF)
-  SPECS <- SPECS[!SPECS$disasg %in% c( "EduCat"),]
+ 
   SPECS <- rbind(
-    data.frame(SPECS[ (SPECS$f %in% mainF & SPECS$d %in% mainD & SPECS$TechVar %in% "LndOwn" & SPECS$level %in% "Pooled"),], nnm="fullset"),
-    data.frame(SPECS[ (SPECS$f %in% mainF & SPECS$d %in% mainD & SPECS$TechVar %in% "LndOwn" & SPECS$level %in% "Pooled"),], nnm="optimal"),
-    data.frame(SPECS[!(SPECS$f %in% mainF & SPECS$d %in% mainD & SPECS$TechVar %in% "LndOwn" & SPECS$level %in% "Pooled"),], nnm="optimal"))
+    data.frame(SPECS[ (SPECS$f %in% mainF & SPECS$d %in% mainD & SPECS$TechVar %in% "OwnLnd" & SPECS$level %in% "Pooled"),], nnm="fullset"),
+    data.frame(SPECS[ (SPECS$f %in% mainF & SPECS$d %in% mainD & SPECS$TechVar %in% "OwnLnd" & SPECS$level %in% "Pooled"),], nnm="optimal"),
+    data.frame(SPECS[!(SPECS$f %in% mainF & SPECS$d %in% mainD & SPECS$TechVar %in% "OwnLnd" & SPECS$level %in% "Pooled"),], nnm="optimal"))
   
   SPECS <- SPECS[!(paste0(SPECS$disasg,"_",SPECS$level,"_",SPECS$TechVar,"_",names(FXNFORMS)[SPECS$f],"_",
                           names(DISTFORMS)[SPECS$d],"_",SPECS$nnm,".rds") %in% list.files("results/estimations/")),]
@@ -91,7 +91,7 @@ lapply(
       res <- lapply(
         unique(drawlist$ID),Fxn_draw_estimations,
         data = data,
-        surveyy  = TRUE,
+        surveyy  = "Pooled" %in% data[,"CropID"],
         intercept_shifters  = list(Svarlist=ArealistX,Fvarlist=c("Ecozon")),
         intercept_shiftersM = list(Svarlist=NULL,Fvarlist=c("Ecozon")),
         drawlist = drawlist,
@@ -139,7 +139,7 @@ lapply(
       
       res[["names"]] <- paste0(disasg,"_",level,"_",TechVar,"_",names(FXNFORMS)[f],"_",names(DISTFORMS)[d],"_",nnm)
       
-      if(!(TechVar %in% "LndOwn" & nnm %in% "optimal" & level %in% "Pooled" & disasg %in% "CropID" & f %in% 2 & d %in% 1)){
+      if(!(TechVar %in% "OwnLnd" & nnm %in% "optimal" & level %in% "Pooled" & disasg %in% "CropID" & f %in% 2 & d %in% 1)){
         res$rk_dist <- NULL
         res$rk_mean <- NULL
         res$rk_samp <- NULL
