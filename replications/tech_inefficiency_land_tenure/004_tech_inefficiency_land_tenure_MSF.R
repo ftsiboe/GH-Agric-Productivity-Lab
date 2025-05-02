@@ -18,18 +18,24 @@ DATA$LndAq <- as.integer(DATA$LndAq)
 FXNFORMS  <- Fxn_SF_forms()$FXNFORMS
 DISTFORMS <- Fxn_SF_forms()$DISTFORMS
 
+DATA$LndRgt <- ifelse(DATA$LndRgt == min(DATA$LndRgt,na.rm=T) & DATA$OwnLnd > min(DATA$OwnLnd,na.rm=T),NA,DATA$LndRgt)
+table(DATA$OwnLnd,DATA$LndRgt)
+
 function(){
 
   mainD <- 1
   mainF <- 2
   
-  SPECS <- Fxn_SPECS(TechVarlist=c("LndOwn","OwnLnd","ShrCrpCat","LndRgt","LndAq"),  
+  SPECS <- Fxn_SPECS(TechVarlist=c("OwnLnd","LndOwn","LndRgt"),  
                      mainD = mainD, mainF=mainF)
  
   SPECS <- rbind(
     data.frame(SPECS[ (SPECS$f %in% mainF & SPECS$d %in% mainD & SPECS$TechVar %in% "OwnLnd" & SPECS$level %in% "Pooled"),], nnm="fullset"),
     data.frame(SPECS[ (SPECS$f %in% mainF & SPECS$d %in% mainD & SPECS$TechVar %in% "OwnLnd" & SPECS$level %in% "Pooled"),], nnm="optimal"),
     data.frame(SPECS[!(SPECS$f %in% mainF & SPECS$d %in% mainD & SPECS$TechVar %in% "OwnLnd" & SPECS$level %in% "Pooled"),], nnm="optimal"))
+  
+  SPECS <- SPECS[!(SPECS$disasg %in% c("CropID") & !SPECS$level %in% "Pooled"),]
+  SPECS <- SPECS[!SPECS$disasg %in% c( "Female","Region","Ecozon","EduCat","EduLevel","AgeCat"),]
   
   SPECS <- SPECS[!(paste0(SPECS$disasg,"_",SPECS$level,"_",SPECS$TechVar,"_",names(FXNFORMS)[SPECS$f],"_",
                           names(DISTFORMS)[SPECS$d],"_",SPECS$nnm,".rds") %in% list.files("results/estimations/")),]
@@ -86,12 +92,19 @@ lapply(
       # draw estimations
       drawlist = readRDS("results/drawlist.rds")
       if(nnm %in% "fullset") drawlist <- drawlist[drawlist$ID<=50,]
+ 
       disagscors_list <- NULL
-
+      
+      if(TechVar %in% "OwnLnd" &  nnm %in% "optimal" & level %in% "Pooled" & disasg %in% "CropID" & f %in% 2 & d %in% 1){
+        disagscors_list <- c("Ecozon","Region","AgeCat","EduLevel","Female",
+                             names(data)[grepl("CROP_",names(data))],"LndAq","ShrCrpCat")
+        disagscors_list <- unique(disagscors_list[disagscors_list %in% names(data)])
+      }
+      
       res <- lapply(
         unique(drawlist$ID),Fxn_draw_estimations,
         data = data,
-        surveyy  = "Pooled" %in% data[,"CropID"],
+        surveyy  = TRUE,
         intercept_shifters  = list(Svarlist=ArealistX,Fvarlist=c("Ecozon")),
         intercept_shiftersM = list(Svarlist=NULL,Fvarlist=c("Ecozon")),
         drawlist = drawlist,
@@ -101,6 +114,7 @@ lapply(
         ulist = list(Svarlist=c("lnAgeYr","lnYerEdu","CrpMix"),Fvarlist=c("Female","Ecozon","Extension","Credit","EqipMech")),
         ulistM= list(Svarlist=c("lnAgeYr","lnYerEdu","CrpMix"),Fvarlist=c("Female","Ecozon","Extension","Credit","EqipMech")),
         UID   = c("UID", "Survey", "CropID", "HhId", "EaId", "Mid"),
+        disagscors_list   = disagscors_list,
         f     = f,
         d     = d,
         tvar  = TechVar,

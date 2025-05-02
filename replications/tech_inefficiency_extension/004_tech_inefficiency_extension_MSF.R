@@ -43,7 +43,7 @@ if(!is.na(as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID")))){
 lapply(
   c(1:nrow(SPECS)),
   function(fit){
-    # fit <- 1
+    # fit <- 2
     f <- SPECS$f[fit]
     d <- SPECS$d[fit]
     disasg <- SPECS$disasg[fit]
