@@ -242,7 +242,7 @@ fig_robustness <- function(y_title, res_list) {
             ef_mean <- readRDS(file)$ef_mean
             # Filter ef_mean data
             ef_mean <- ef_mean[ef_mean$type %in% c("TE", "TGR", "MTE"), ]
-            ef_mean <- ef_mean[ef_mean$CoefName %in% c("efficiencyGap_pct"), ]
+            ef_mean <- ef_mean[ef_mean$CoefName %in% c("efficiencyGap_lvl"), ]
             ef_mean <- ef_mean[ef_mean$Survey %in% c("GLSS0"), ]
             ef_mean$file <- file 
             return(ef_mean)

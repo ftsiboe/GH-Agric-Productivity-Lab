@@ -7,6 +7,10 @@ tempfile Summaries DATA
 
 use "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_land_tenure\data\tech_inefficiency_land_tenure_data",clear
 decode CropID,gen(CropIDx)
+keep if CropIDx == "Pooled"
+
+use "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_land_tenure\data\tech_inefficiency_land_tenure_data",clear
+decode CropID,gen(CropIDx)
 *keep if CropIDx == "Pooled"
 qui levelsof CropIDx, local(levels)
 
@@ -197,7 +201,7 @@ use `Summaries', clear
 
 export excel CropIDx Equ Coef Beta SE Tv Pv Min Max SD N /*
 */ using "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_land_tenure\results\tech_inefficiency_land_tenure_results.xlsx", /*
-*/ sheet("Means") sheetmodify firstrow(variables) 
+*/ sheet("means") sheetmodify firstrow(variables) 
 
 
 
@@ -206,13 +210,14 @@ sca drop _all
 use "$GitHub\GH-Agric-Productivity-Lab\replications\tech_inefficiency_land_tenure\data\tech_inefficiency_land_tenure_data",clear
 decode CropID,gen(CropIDx)
 keep if inlist(Surveyx,"GLSS6","GLSS7")
+tab CropIDx Surveyx
 for var LndOwn LndRgt LndAq ShrCrpCat:tab X,gen(X_)
 tabstat LndOwn_* LndRgt_* LndAq_* ShrCrpCat_* if CropIDx == "Pooled",by(Surveyx) save
 
 gen Trend=Season-r(min)
 egen Clust = group(Survey Ecozon EaId HhId)
 mat Means=J(1,8,.)
-qui foreach Var in OwnLnd LndOwn_1 LndOwn_2 LndOwn_3 LndRgt_1 LndRgt_2 LndRgt_3 LndRgt_4 LndAq_1 LndAq_2 LndAq_3 LndAq_4 LndAq_5 ShrCrpCat_1 ShrCrpCat_2 ShrCrpCat_3 {
+qui foreach Var in OwnLnd LndOwn_1 LndOwn_2 LndOwn_3 LndRgt_1 LndRgt_2 LndRgt_3 LndRgt_4 LndAq_1 LndAq_2 LndAq_3 LndAq_4 LndAq_5 LndAq_6 ShrCrpCat_1 ShrCrpCat_2 ShrCrpCat_3 {
 	qui levelsof CropIDx, local(levels)
 	qui foreach crop in `levels'{
 		preserve
