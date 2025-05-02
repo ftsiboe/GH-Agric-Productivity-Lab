@@ -8,7 +8,6 @@ dir.create("results")
 dir.create("results/estimations")
 
 DATA <- Fxn_DATA_Prep(as.data.frame(haven::read_dta("data/tech_inefficiency_land_tenure_data.dta")))
-
 DATA$LndOwn <- as.integer(DATA$LndOwn)
 DATA$OwnLnd <- as.integer(DATA$OwnLnd)
 DATA$ShrCrpCat <- as.integer(DATA$ShrCrpCat)
