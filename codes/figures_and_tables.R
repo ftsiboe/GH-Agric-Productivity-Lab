@@ -113,7 +113,7 @@ tab_main_specification <- function(res_list = list.files("results/estimations/",
 # Args:
 #   res: A data frame containing the results to be plotted.
 #   y_title: A string representing the title for the y-axis of the plot.
-fig_heterogeneity00 <- function(res, y_title) {
+fig_heterogeneity00 <- function(res, y_title,colset=c("orange", "darkgreen", "blue")) {
   
   # Update the 'level' column based on conditions
   res$level <- ifelse(res$disasg %in% "AgeCat" & res$level == "1", "Farmer aged\n35 or less", res$level)
@@ -178,8 +178,8 @@ fig_heterogeneity00 <- function(res, y_title) {
       geom_point(size = 1.5) +
       scale_x_continuous(breaks = myrank$x, labels = myrank$level) +
       labs(title = title, x = "", y = "", caption = "") +
-      scale_fill_manual(name = "", values = c("thistle", "violet", "purple")) +
-      scale_color_manual(name = "", values = c("thistle", "violet", "purple")) +
+      scale_fill_manual(name = "", values = colset) +
+      scale_color_manual(name = "", values = colset) +
       scale_shape_manual(name = "", values = c(21, 22, 23, 24, 25, 8, 4)) +
       ers_theme() +
       theme(axis.title = element_text(size = 9, color = "black"),
@@ -231,7 +231,7 @@ fig_heterogeneity00 <- function(res, y_title) {
 # Function to generate robustness figures                 ####
 #   y_title: A string representing the title for the y-axis of the plot.
 #   res_list: A list of file paths to RDS files containing estimation results.
-fig_robustness <- function(y_title, res_list) {
+fig_robustness <- function(y_title, res_list,colset=c("orange", "darkgreen")) {
   data <- as.data.frame(
     data.table::rbindlist(
       lapply(
@@ -370,12 +370,12 @@ fig_robustness <- function(y_title, res_list) {
   fig <- ggplot(data = dataF, aes(x = factor(x), y = Estimate, group = 1)) +
     geom_vline(xintercept = xline, size = 0.2, color = "gray", lty = 1) +
     geom_ribbon(aes(ymin = mainest - mainest.sd * 1.96, ymax = mainest + mainest.sd * 1.96, fill = mainestN), 
-                alpha = 0.5, color = "thistle") +
+                alpha = 0.5, color = colset[1]) +
     geom_line(aes(y = mainest, linetype = mainestN, color = mainestN), size = 0.5) + 
     geom_errorbar(aes(ymax = Estimate + Estimate.sd * 1.96, ymin = Estimate - Estimate.sd * 1.96),
                   width = 0.25, color = "blue") + 
-    geom_point(size = 1.5, shape = 21, fill = "purple", color = "blue") + 
-    scale_fill_manual(values = "thistle") +
+    geom_point(size = 1.5, shape = 21, fill = colset[2], color = "blue") + 
+    scale_fill_manual(values = colset[1]) +
     scale_color_manual(values = "black") +
     scale_linetype_manual(values = 2) +
     scale_x_discrete(breaks = xlab$x, labels = xlab$options) +
@@ -408,7 +408,7 @@ fig_robustness <- function(y_title, res_list) {
 #   y_title: A string representing the title for the y-axis of the plot.
 #   tech_lable: A vector of strings representing labels for different levels of technical efficiency.
 
-fig_input_te <- function(y_title, tech_lable) {
+fig_input_te <- function(y_title, tech_lable,colset=c("orange", "darkgreen", "blue")) {
   
   # Read the summary data from the specified RDS file
   data <- readRDS(paste0("results/te_summary.rds"))
@@ -465,6 +465,8 @@ fig_input_te <- function(y_title, tech_lable) {
     geom_point(position = dodge, size = 2.5) +  # Add points
     labs(title = "", x = "", y = y_title, caption = "") +  # Add labels
     scale_y_continuous(breaks = seq(-100, 100, by = 5)) +  # Set y-axis breaks
+    scale_fill_manual(name = "", values = colset) +
+    scale_color_manual(name = "", values = colset) +
     ers_theme() +  # Apply custom theme
     theme_bw() +  # Apply black and white theme
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.ticks.x = element_blank()) +  # Customize theme
@@ -491,7 +493,7 @@ fig_input_te <- function(y_title, tech_lable) {
 #------------------------------------------------------------
 # Function to generate a covariate balance figure         ####
 
-fig_covariate_balance <- function() {
+fig_covariate_balance <- function(colset=c("darkgreen", "orange", "blue")) {
   
   # Read the balance table, ranking, and mspecs data from their respective RDS files
   bal_tab <- readRDS(paste0("results/balance_table.rds"))
@@ -578,7 +580,7 @@ fig_covariate_balance <- function() {
     geom_point() +
     geom_point(data = CovBalDATA[CovBalDATA$ID %in% nrow(ranking), ],
                aes(x = value, y = reorder(Coef, 1/as.integer(Coef), na.rm = TRUE), group = sample),
-               color = "purple", shape = 11, fill = "purple") +
+               color = colset[3], shape = 11, fill = colset[3]) +
     geom_vline(data = data.frame(
       x = c(0, 1, 0),
       stat = factor(
@@ -587,10 +589,10 @@ fig_covariate_balance <- function() {
                    "Variance Ratios",
                    "Kolmogorov-Smirnov (KS) Statistics"))),
       aes(xintercept = x), size = 0.5, color = "black") +
-    scale_fill_manual("Sample:", values = c("violet", "thistle", "thistle", "thistle", "thistle",
-                                            "thistle", "thistle", "thistle", "purple")) +
-    scale_color_manual("Sample:", values = c("violet", "thistle", "thistle", "thistle", "thistle",
-                                             "thistle", "thistle", "thistle", "purple")) +
+    scale_fill_manual("Sample:", values = c(colset[1], colset[2], colset[2], colset[2], colset[2],
+                                            colset[2], colset[2], colset[2], colset[3])) +
+    scale_color_manual("Sample:", values = c(colset[1], colset[2], colset[2], colset[2], colset[2],
+                                             colset[2], colset[2], colset[2], colset[3])) +
     scale_shape_manual("Sample:", values = c(21, 25, 24, 22, 23, 3, 4, 8, 11)) +
     labs(title = "", x = "", y = "", caption = "") +
     facet_wrap(~stat, scales = "free_x", ncol = 3) +
