@@ -1,4 +1,4 @@
-# Financial Inclusion and Credit Access Linkages To Farm Technology Adoption and its Efficient Use 
+# Financial Inclusion and Credit Impacts on Crop Production in Ghana
 
 For details about the project and its broader context, please refer to the main [GH-Agric-Productivity-Lab README](../README.md) in the repository's root.
 
