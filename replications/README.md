@@ -19,7 +19,7 @@ Each folder contains scripts, data, and results specific to the study indicated 
 - **`tech_inefficiency_education`**: Analyzes how education influences farm production.
 - **`tech_inefficiency_extension`**: Evaluates the effect of extension services on farm production.
 - **`tech_inefficiency_land_tenure`**: Assesses how land tenure security influences farm production.
-- **`tech_inefficiency_offfarm_work`**: Explores how off-farm work affects farm production.
+- **`tech_inefficiency_nonfarm_enterprise`**: Explores how nonfarm enterprise affects farm production.
 - **`tech_inefficiency_resource_extract`**: Investigates the impact of resource extraction activities on farm production.
 
 ## Contributing
