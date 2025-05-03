@@ -1,3 +1,5 @@
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
+
 # Agricultural Productivity in Ghana
 
 *Collaborations with enthusiastic and committed graduate students are welcomed. For more details see the wiki on [Graduate Student Opportunity to Lead Research on Agricultural Productivity in Ghana](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/wiki/Graduate-Student-Opportunity-to-Lead-Research-on-Agricultural-Productivity-in-Ghana)*
