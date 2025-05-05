@@ -6,7 +6,7 @@ drop if dup>0
 merg 1:m Surveyx EaId using "$GitHub\GH-Agric-Productivity-Lab\datasets\harmonized_crop_farmer_data"
 keep if _merge == 3
 drop _merge dup
-keep if inlist(Surveyx,"GLSS1","GLSS2","GLSS3","GLSS4","GLSS5","GLSS6","GLSS7")
+keep if inlist(Surveyx,"GLSS3","GLSS4","GLSS5","GLSS6","GLSS7")
 drop Lnd* Seas Crop SeasN UID Extension RentHa HrvstV 
 drop EduWhyNo Distcode  
 gen UID = _n

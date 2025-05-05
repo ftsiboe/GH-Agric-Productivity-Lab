@@ -1,5 +1,5 @@
 rm(list=ls(all=TRUE));gc()
-setwd(ifelse(Sys.info()['sysname'] =="Windows",paste0("C:/Users/",Sys.info()['user'],"/Documents/GitHub/GH-Agric-Productivity-Lab"),
+setwd(ifelse(Sys.info()['sysname'] =="Windows","C:/GitHub/GH-Agric-Productivity-Lab",
              paste0("/homes/",Sys.info()['user'],"/Articles/GH/GH_AgricProductivityLab/")))
 PROJECT <- getwd()
 source(paste0(getwd(),"/codes/helpers_tech_inefficiency.R"))
@@ -12,13 +12,21 @@ DATA <- Fxn_DATA_Prep(as.data.frame(haven::read_dta("data/tech_inefficiency_exte
 FXNFORMS  <- Fxn_SF_forms()$FXNFORMS
 DISTFORMS <- Fxn_SF_forms()$DISTFORMS
 
+# Extlist <- names(DATA)[grepl("ext_",names(DATA))]
+# Extlist <- c(Extlist[!Extlist %in% "ext_available"])
+# for(ext in Extlist){
+#   print(table(DATA[,ext],DATA[,"ext_available"]))
+#   DATA[,ext] <- ifelse(DATA[,ext] %in% 1 & DATA[,"ext_available"] %in% 0,NA,DATA[,ext])
+#   DATA[,ext] <- ifelse(DATA[,ext] %in% 1 & DATA[,"ext_available"] %in% 0,NA,DATA[,ext])
+# }
+
 function(){
 
   mainD <- 1
   mainF <- 2
   
   Extlist <- names(DATA)[grepl("ext_",names(DATA))]
-  Extlist <- c("ext_available",Extlist[Extlist %in% "ext_available"])
+  Extlist <- c(Extlist[!Extlist %in% "ext_available"],"ext_available")
   
   SPECS <- Fxn_SPECS(TechVarlist=c(Extlist),mainD = mainD, mainF=mainF)
   
