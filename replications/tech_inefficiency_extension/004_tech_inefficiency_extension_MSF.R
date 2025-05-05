@@ -24,8 +24,12 @@ function(){
   
   SPECS <- rbind(
     data.frame(SPECS[ (SPECS$f %in% mainF & SPECS$d %in% mainD & SPECS$TechVar %in% "ext_available" & SPECS$level %in% "Pooled"),], nnm="fullset"),
+    data.frame(SPECS[ (SPECS$f %in% mainF & SPECS$d %in% mainD & SPECS$TechVar %in% "ext_available" & SPECS$level %in% "Pooled"),], nnm="optimal"),
     data.frame(SPECS[!(SPECS$f %in% mainF & SPECS$d %in% mainD & SPECS$TechVar %in% "ext_available" & SPECS$level %in% "Pooled"),], nnm="optimal"))
-
+  
+  SPECS <- SPECS[!(SPECS$disasg %in% c("CropID") & !SPECS$level %in% "Pooled"),]
+  SPECS <- SPECS[!SPECS$disasg %in% c( "Female","Region","Ecozon","EduCat","EduLevel","AgeCat"),]
+  
   SPECS <- SPECS[!(paste0(SPECS$disasg,"_",SPECS$level,"_",SPECS$TechVar,"_",names(FXNFORMS)[SPECS$f],"_",
                           names(DISTFORMS)[SPECS$d],"_",SPECS$nnm,".rds") %in% list.files("results/estimations/")),]
   
@@ -84,9 +88,10 @@ lapply(
       if(nnm %in% "fullset") drawlist <- drawlist[drawlist$ID<=50,]
       
       disagscors_list <- NULL
-      if(paste0(disasg,"_",level,"_",TechVar,"_",names(FXNFORMS)[f],"_",names(DISTFORMS)[d],"_",nnm,".rds") %in% 
-         "CropID_Pooled_educated_TL_hnormal_optimal.rds"){
-        disagscors_list <- c("Ecozon","Region","AgeCat","Female",names(data)[grepl("CROP_",names(data))])
+      
+      if(TechVar %in% "OwnLnd" &  nnm %in% "optimal" & level %in% "Pooled" & disasg %in% "CropID" & f %in% 2 & d %in% 1){
+        disagscors_list <- c("Ecozon","Region","AgeCat","EduLevel","Female",names(data)[grepl("CROP_",names(data))])
+        disagscors_list <- unique(disagscors_list[disagscors_list %in% names(data)])
       }
       
       res <- lapply(
@@ -127,7 +132,7 @@ lapply(
         Main <- Main[Main$Survey %in% "GLSS0",]
         Main <- Main[!Main$sample %in% "unmatched",]
         Main <- Main[Main$stat %in% "wmean",]
-        Main <- Main[Main$CoefName %in% "efficiencyGap_pct",]
+        Main <- Main[Main$CoefName %in% "efficiencyGap_lvl",]
         Main <- Main[Main$restrict %in% "Restricted",]
         Main <- Main[Main$estType %in% "teBC",]
         Main[Main$type %in% "TGR",c("sample","type","Tech","Estimate")]

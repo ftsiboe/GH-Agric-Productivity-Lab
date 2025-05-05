@@ -197,7 +197,7 @@ Fxn_draw_spec <- function(drawN, DATA, myseed=03242025) {
   return(list(m.specs=m.specs, drawlist=drawlist))
 }
 #---------------------------------------------
-# Sampels                                  ####
+# Samples                                  ####
 # This function performs stratified bootstrap sampling and matching.
 # Parameters:
 # - DATA: The dataset to be used.
