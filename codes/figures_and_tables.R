@@ -467,6 +467,7 @@ fig_input_te <- function(y_title, tech_lable,colset=c("orange", "darkgreen", "bl
     scale_y_continuous(breaks = seq(-100, 100, by = 5)) +  # Set y-axis breaks
     scale_fill_manual(name = "", values = colset) +
     scale_color_manual(name = "", values = colset) +
+    scale_shape_manual(name = "", values = 21:25) +
     ers_theme() +  # Apply custom theme
     theme_bw() +  # Apply black and white theme
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), axis.ticks.x = element_blank()) +  # Customize theme

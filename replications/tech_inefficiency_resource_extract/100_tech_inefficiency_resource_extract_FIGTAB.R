@@ -1,5 +1,5 @@
 rm(list=ls(all=TRUE));gc()
-setwd(ifelse(Sys.info()['sysname'] =="Windows",paste0("C:/Users/",Sys.info()['user'],"/Documents/GitHub/GH-Agric-Productivity-Lab"),
+setwd(ifelse(Sys.info()['sysname'] =="Windows","C:/GitHub/GH-Agric-Productivity-Lab",
              paste0("/homes/",Sys.info()['user'],"/Articles/GH/GH_AgricProductivityLab/")))
 PROJECT <- getwd()
 source(paste0(getwd(),"/codes/figures_and_tables.R"))
@@ -16,6 +16,57 @@ res <- tab_main_specification()
 wb <- openxlsx::loadWorkbook("results/tech_inefficiency_resource_extract_results.xlsx")
 openxlsx::writeData(wb, sheet = "msf",res , colNames = T, startCol = "A", startRow = 1)
 openxlsx::saveWorkbook(wb,"results/tech_inefficiency_resource_extract_results.xlsx",overwrite = T)
+
+# Fig - TREND 
+ef_mean <- readRDS("results/estimations//CropID_Pooled_extraction_any_TL_hnormal_optimal.rds")$ef_mean
+ef_mean <- ef_mean[ef_mean$stat %in% "wmean", ]
+ef_mean <- ef_mean[ef_mean$estType %in% "teBC", ]
+ef_mean$estm_type <- "ef_mean"
+ef_mean$level_type <- gsub("efficiency", "", ef_mean$CoefName)
+ef_mean$level_type <- ifelse(ef_mean$level_type %in% "", "level", ef_mean$level_type)
+ef_mean$CoefName <- ef_mean$type
+ef_mean <- ef_mean[c("TCH", "FXN", "DIS", "estm_type", "level_type", "sample", "Survey", "restrict", "Tech", "CoefName", "Estimate", "Estimate.sd", "jack_pv")]
+ef_mean <- ef_mean[ef_mean$restrict %in% "Restricted", ]
+ef_mean <- ef_mean[ef_mean$sample %in% ifelse(mspecs_optimal$link %in% NA,mspecs_optimal$distance,mspecs_optimal$link),]
+ef_mean <- ef_mean[ef_mean$level_type %in% "Gap_lvl", ]
+ef_mean <- ef_mean[!ef_mean$CoefName %in% "TE0", ]
+ef_mean <- ef_mean[!ef_mean$Survey %in% "GLSS0", ]
+
+ef_mean$type <- as.numeric(as.character(factor(ef_mean$CoefName, levels = c("TGR", "TE","MTE"), labels = 1:3)))
+ef_mean$type <- factor(ef_mean$type, levels = 1:3,
+                       labels = c("Technology gap ratio", "Technical efficiency", "Meta-technical-efficiency"))
+
+ef_mean$Survey <- factor(ef_mean$Survey, levels = c("GLSS3","GLSS4","GLSS5","GLSS6","GLSS7"),
+                         labels = c("1991/1992\n(GLSS 3)","1998/1999\n(GLSS4)","2005/2006\n(GLSS5)",
+                                    "2012/2013\n(GLSS6)","2016/2017\n(GLSS7)"))
+
+fig <- ggplot(
+  data = ef_mean,
+  aes(x = Survey, y = Estimate*100, group = type, fill = type, color = type, shape = type)) +
+  geom_hline(yintercept = 0, size = 0.5, color = "black") +  # Add a horizontal line at y = 0
+  geom_point(size=2) +
+  geom_errorbar(aes(ymax = (Estimate + Estimate.sd)*100, ymin = (Estimate - Estimate.sd)*100), width = 0.10) +
+  geom_line() +
+  scale_fill_manual("", values = c("orange", "darkgreen", "blue")) +
+  scale_color_manual("", values = c("orange", "darkgreen", "blue")) +
+  scale_shape_manual("", values = c(21, 25, 24, 22, 23, 3, 4, 8, 11)) +
+  scale_y_continuous(breaks = seq(-100, 100, by = 5)) +
+  labs(title = "", x = "", y = "Percentage point difference  [Any extraction minus No extraction]\n", caption = "") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  theme(legend.position = "bottom") +
+  theme(legend.text = element_text(size = 8),
+        legend.title = element_text(size = 8),
+        plot.title = element_text(size = 10),
+        axis.title.y = element_text(size = 10),
+        axis.title.x = element_text(size = 10),
+        axis.text.x = element_text(size = 8, colour = "black"),
+        axis.text.y = element_text(size = 6, colour = "black"),
+        plot.caption = element_text(size = 11, hjust = 0, vjust = 0, face = "italic"),
+        strip.text = element_text(size = 8),
+        strip.background = element_rect(fill = "white", colour = "black", size = 1))
+ggsave("results/figures/score_trend.png", fig,dpi = 600,width = 6, height = 6)
+
 
 # Fig - Heterogeneity          
 rm(list= ls()[!(ls() %in% c(Keep.List))])
