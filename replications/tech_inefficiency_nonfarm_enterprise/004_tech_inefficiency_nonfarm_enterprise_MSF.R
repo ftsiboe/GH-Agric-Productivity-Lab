@@ -170,7 +170,7 @@ lapply(
       res <- lapply(
         unique(drawlist$ID)[1:3], Fxn_draw_estimations,
         data              = data,
-        surveyy           = F,
+        surveyy           = T,
         intercept_shifters = list(Svarlist = ArealistX, Fvarlist = c("Survey", "Ecozon")),
         intercept_shiftersM = list(Svarlist = NULL, Fvarlist = c("Survey", "Ecozon")),
         drawlist          = drawlist,
