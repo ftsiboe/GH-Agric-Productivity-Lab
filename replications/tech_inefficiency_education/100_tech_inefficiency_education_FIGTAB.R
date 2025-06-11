@@ -1,6 +1,6 @@
 
 rm(list=ls(all=TRUE));gc()
-setwd(ifelse(Sys.info()['sysname'] =="Windows",paste0("C:/Users/",Sys.info()['user'],"/Documents/GitHub/GH-Agric-Productivity-Lab"),
+setwd(ifelse(Sys.info()['sysname'] =="Windows","C:/GitHub/GH-Agric-Productivity-Lab",
              paste0("/homes/",Sys.info()['user'],"/Articles/GH/GH_AgricProductivityLab/")))
 PROJECT <- getwd()
 source(paste0(getwd(),"/codes/figures_and_tables.R"))
@@ -28,9 +28,9 @@ res <- res[res$Survey %in% "GLSS0",]
 res <- res[res$restrict %in% "Restricted",]
 res <- res[res$stat %in% "mean",]
 res <- res[!res$sample %in% "unmatched",]
-res <- res[res$CoefName %in% "disag_efficiencyGap_pct",]
+res <- res[res$CoefName %in% "disag_efficiencyGap_lvl",]
 res <- res[c("disasg","level","FXN","DIS","Survey","input","TCH","Tech","CoefName","Estimate","Estimate.sd","jack_pv")]
-fig <- fig_heterogeneity00(res=res,y_title="Percentage Difference (Educated less Uneducated)\n")
+fig <- fig_heterogeneity00(res=res,y_title="Difference (Educated less Uneducated)\n")
 ggsave("results/figures/heterogeneity_crop_region.png", fig[["crop_region"]],dpi = 600,width = 8, height = 5)
 ggsave("results/figures/heterogeneity_genderAge.png", fig[["genderAge"]],dpi = 600,width = 5, height = 5)
 
