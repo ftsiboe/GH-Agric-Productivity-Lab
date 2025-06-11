@@ -1,4 +1,4 @@
-# Association Between Farmland Ownership and Crop Production in Ghana 
+# Secure Land Ownership Appears Neither Necessary nor Sufficient for Superior Agricultural Performance in Ghana 
 
 For details about the project and its broader context, please refer to the main [GH-Agric-Productivity-Lab README](../README.md) in the repository's root.
 
