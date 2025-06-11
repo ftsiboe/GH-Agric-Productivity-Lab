@@ -35,7 +35,7 @@ The project utilizes farm-level data from the Ghana Living Standards Surveys (GL
 * [Digging into the Linkages Between Resource Extraction and Farm Performance](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_resource_extract#digging-into-the-linkages-between-resource-extraction-and-farm-performance) | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_resource_extract)
 * Societal Peace and Cohesion Improve Farm Technology and Technical Efficiency in Ghana | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_conflict)
 * Financial Inclusion and Credit Impacts on Crop Production in Ghana  | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_financial_inclusion)
-* Association Between Farmland Ownership and Crop Production in Ghana | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_land_tenure)
+* Land Ownership Appears Neither Necessary nor Sufficient for Superior Agricultural Performance in Ghana | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_land_tenure)
   
 ## 📅 Scheduled Studies
 * The link between extension services and Farm Technology Endowment and its Efficient Use | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_extension)
