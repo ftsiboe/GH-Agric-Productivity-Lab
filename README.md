@@ -36,6 +36,7 @@ The project utilizes farm-level data from the Ghana Living Standards Surveys (GL
 * Societal Peace and Cohesion Improve Farm Technology and Technical Efficiency in Ghana | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_conflict)
 * Financial Inclusion and Credit Impacts on Crop Production in Ghana  | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_financial_inclusion)
 * Land Ownership Appears Neither Necessary nor Sufficient for Superior Agricultural Performance in Ghana | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_land_tenure)
+* The Association Between Income Transfers and Crop Production in Ghana | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_income_transfer)
   
 ## 📅 Scheduled Studies
 * The link between extension services and Farm Technology Endowment and its Efficient Use | [🗂️⚙️](https://github.com/ftsiboe/GH-Agric-Productivity-Lab/tree/master/replications/tech_inefficiency_extension)
