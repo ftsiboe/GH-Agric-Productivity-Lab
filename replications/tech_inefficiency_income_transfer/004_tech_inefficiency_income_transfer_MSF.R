@@ -32,7 +32,7 @@ PROJECT <- getwd()
 source(paste0(getwd(), "/codes/helpers_tech_inefficiency.R"))
 
 # Change working directory to the replication folder for tech inefficiency & financial inclusion
-setwd(paste0(getwd(), "/replications/tech_inefficiency_financial_inclusion"))
+setwd(paste0(getwd(), "/replications/tech_inefficiency_income_transfer"))
 
 # Create directories to store results and estimations if they do not exist already
 dir.create("results", showWarnings = FALSE)
@@ -40,7 +40,7 @@ dir.create("results/estimations", showWarnings = FALSE)
 
 # Load and prepare the dataset using a helper function.
 # The raw data is read from a Stata (.dta) file.
-DATA <- Fxn_DATA_Prep(as.data.frame(haven::read_dta("data/tech_inefficiency_financial_inclusion_data.dta")))
+DATA <- Fxn_DATA_Prep(as.data.frame(haven::read_dta("data/tech_inefficiency_income_transfer_data.dta")))
 
 # Convert the 'EduCat' variable to character for consistency in further processing
 DATA$EduCat <- as.character(DATA$EduCat)
@@ -60,20 +60,21 @@ function(){
   mainF <- 2
   
   # Generate initial unique model specifications using a helper function
-  SPECS <- unique(Fxn_SPECS(TechVarlist = c("credit_hh","credit_close","credit_member","credit_spouse","credit_self", "credit_child"), mainD = mainD, mainF = mainF))
+
+  SPECS <- unique(Fxn_SPECS(TechVarlist = names(DATA)[grepl("transfer",names(DATA))], mainD = mainD, mainF = mainF))
   
   # Create two subsets of SPECS for 'fullset' and 'optimal' and then combine them.
   SPECS <- rbind(
-    data.frame(SPECS[(SPECS$f %in% mainF & SPECS$d %in% mainD & SPECS$TechVar %in% "credit_hh" & 
+    data.frame(SPECS[(SPECS$f %in% mainF & SPECS$d %in% mainD & SPECS$TechVar %in% "transfer" & 
                         SPECS$level %in% "Pooled"),], nnm = "fullset"),
-    data.frame(SPECS[(SPECS$f %in% mainF & SPECS$d %in% mainD & SPECS$TechVar %in% "credit_hh" & 
+    data.frame(SPECS[(SPECS$f %in% mainF & SPECS$d %in% mainD & SPECS$TechVar %in% "transfer" & 
                         SPECS$level %in% "Pooled"),], nnm = "optimal"),
-    data.frame(SPECS[!(SPECS$f %in% mainF & SPECS$d %in% mainD & SPECS$TechVar %in% "credit_hh" & 
+    data.frame(SPECS[!(SPECS$f %in% mainF & SPECS$d %in% mainD & SPECS$TechVar %in% "transfer" & 
                          SPECS$level %in% "Pooled"),], nnm = "optimal"))
   
   # Exclude specifications with 'CropID' if the level is not "Pooled"
   SPECS <- SPECS[!(SPECS$disasg %in% c("CropID") & !SPECS$level %in% "Pooled"),]
-  SPECS <- SPECS[!SPECS$disasg %in% c( "Female","Region","Ecozon","EduCat","EduLevel","AgeCat"),]
+  #SPECS <- SPECS[!SPECS$disasg %in% c( "Female","Region","Ecozon","EduCat","EduLevel","AgeCat"),]
   
   # Remove SPECS that have already been estimated (i.e., their result files exist)
   SPECS <- SPECS[!(paste0(SPECS$disasg, "_", SPECS$level, "_", SPECS$TechVar, "_",
@@ -203,17 +204,17 @@ lapply(
       res <- lapply(
         unique(drawlist$ID), Fxn_draw_estimations,
         data              = data,
-        surveyy           = F,
+        surveyy           = T,
         intercept_shifters = list(Svarlist = ArealistX, Fvarlist = c("Survey", "Ecozon")),
         intercept_shiftersM = list(Svarlist = NULL, Fvarlist = c("Survey", "Ecozon")),
-        drawlist          = drawlist,
+        drawlist          = drawlist[1:3],
         wvar              = "Weight",
         yvar              = "HrvstKg",
         xlist             = c("Area", "SeedKg", "HHLaborAE", "HirdHr", "FertKg", "PestLt"),
         ulist             = list(Svarlist = c("lnAgeYr", "lnYerEdu", "CrpMix"),
-                                 Fvarlist = c("Female", "Survey", "Ecozon", "Extension", "EqipMech", "OwnLnd")),
+                                 Fvarlist = c("Female", "Survey", "Ecozon", "Extension", "EqipMech", "OwnLnd","Credit")),
         ulistM            = list(Svarlist = c("lnAgeYr", "lnYerEdu", "CrpMix"),
-                                 Fvarlist = c("Female", "Survey", "Ecozon", "Extension", "EqipMech", "OwnLnd")),
+                                 Fvarlist = c("Female", "Survey", "Ecozon", "Extension", "EqipMech", "OwnLnd","Credit")),
         UID               = c("UID", "Survey", "CropID", "HhId", "EaId", "Mid"),
         disagscors_list   = disagscors_list,
         f                 = f,
